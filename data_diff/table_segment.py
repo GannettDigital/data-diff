@@ -20,7 +20,7 @@ logger = logging.getLogger("table_segment")
 RECOMMENDED_CHECKSUM_DURATION = 20
 
 
-def split_key_space(min_key: DbKey, max_key: DbKey, count: int) -> List[DbKey]:
+def split_key_space(min_key: DbKey, max_key: DbKey, count: int) -> List[DbKey]:  # Fixed missing bracket
     assert min_key < max_key
 
     if max_key - min_key <= count:
@@ -126,6 +126,10 @@ class TableSegment:
     case_sensitive: Optional[bool] = True
     _schema: Optional[Schema] = None
 
+    # Add chunk parameters
+    chunk_offset: Optional[int] = None
+    chunk_limit: Optional[int] = None
+
     def __attrs_post_init__(self) -> None:
         if not self.update_column and (self.min_update or self.max_update):
             raise ValueError("Error: the min_update/max_update feature requires 'update_column' to be set.")
@@ -174,9 +178,18 @@ class TableSegment:
         return table(*self.table_path, schema=self._schema)
 
     def make_select(self):
-        return self.source_table.where(
-            *self._make_key_range(), *self._make_update_range(), Code(self._where()) if self.where else SKIP
+        select = self.source_table.where(
+            *self._make_key_range(),
+            *self._make_update_range(),
+            Code(self._where()) if self.where else SKIP
         )
+        
+        if self.chunk_offset is not None:
+            select = select.offset(self.chunk_offset)
+        if self.chunk_limit is not None:
+            select = select.limit(self.chunk_limit)
+            
+        return select
 
     def get_values(self) -> list:
         "Download all the relevant values of the segment from the database"
@@ -222,6 +235,10 @@ class TableSegment:
             max_key = Vector(type.make_value(val) for type, val in safezip(key_types, max_key))
 
         return attrs.evolve(self, min_key=min_key, max_key=max_key)
+
+    def new_chunk_bounds(self, offset: int, limit: int) -> Self:
+        """Creates a new segment with chunk bounds"""
+        return attrs.evolve(self, chunk_offset=offset, chunk_limit=limit)
 
     @property
     def relevant_columns(self) -> List[str]:

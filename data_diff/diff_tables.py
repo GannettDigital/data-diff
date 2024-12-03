@@ -197,6 +197,7 @@ class TableDiffer(ThreadBase, ABC):
     ignored_columns2: Set[str] = attrs.field(factory=set)
     _ignored_columns_lock: threading.Lock = attrs.field(factory=threading.Lock, init=False)
     yield_list: bool = False
+    chunk_size: Optional[int] = None  # None means no chunking
 
     def diff_tables(self, table1: TableSegment, table2: TableSegment, info_tree: InfoTree = None) -> DiffResultWrapper:
         """Diff the given tables.
@@ -271,7 +272,22 @@ class TableDiffer(ThreadBase, ABC):
     def _diff_tables_root(
         self, table1: TableSegment, table2: TableSegment, info_tree: InfoTree
     ) -> Union[DiffResult, DiffResultList]:
+        if self.chunk_size:
+            return self._chunk_and_diff_tables(table1, table2, info_tree)
         return self._bisect_and_diff_tables(table1, table2, info_tree)
+
+    def _chunk_and_diff_tables(self, table1: TableSegment, table2: TableSegment, info_tree: InfoTree):
+        """Divide tables into chunks and diff them"""
+        # Get total row count
+        count1, count2 = self._threaded_call("count", [table1, table2])
+        total_chunks = max(count1, count2) // self.chunk_size + 1
+
+        for chunk_num in range(total_chunks):
+            start_pos = chunk_num * self.chunk_size
+            chunk1 = table1.new_chunk_bounds(start_pos, self.chunk_size)
+            chunk2 = table2.new_chunk_bounds(start_pos, self.chunk_size)
+            
+            yield from self._diff_segments(None, chunk1, chunk2, info_tree, self.chunk_size)
 
     @abstractmethod
     def _diff_segments(
