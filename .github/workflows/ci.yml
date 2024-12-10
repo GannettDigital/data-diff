@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [self-hosted, tools-low, cloud-engineering]
         python-version:
           - "3.8"
           - "3.9"
@@ -32,6 +32,9 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Install Packages
+	run:  chmod +x tests/install-packages.sh && ./tests/install-packages.sh
 
       - name: Build the stack
         run: docker-compose up -d mysql postgres presto trino clickhouse vertica
