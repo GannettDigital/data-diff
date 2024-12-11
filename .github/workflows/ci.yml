@@ -1,13 +1,7 @@
 name: CI-COVER-VERSIONS
 
 on:
-    push:
-      paths:
-        - '**.py'
-        - '.github/workflows/**'
-        - '!dev/**'
   pull_request:
-
   workflow_dispatch:
 
 jobs:

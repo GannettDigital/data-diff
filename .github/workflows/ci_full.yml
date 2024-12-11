@@ -1,11 +1,6 @@
 name: CI-COVER-DATABASES
 
 on:
-   push:
-     paths:
-       - '**.py'
-       - '.github/workflows/**'
-       - '!dev/**'
   pull_request:
   workflow_dispatch:
 
