@@ -8,7 +8,7 @@ on:
 jobs:
   linter_name:
     name: runner / ruff
-    runs-on: [self-hosted, tools-low, cloud-engineering]
+    runs-on: [ubuntu-latest] 
     steps:
       - name: Checkout PR head
         uses: actions/checkout@v3

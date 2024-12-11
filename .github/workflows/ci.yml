@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [self-hosted, tools-low, cloud-engineering]
+        os: [ubuntu-latest] 
         python-version:
           - "3.8"
           - "3.9"
