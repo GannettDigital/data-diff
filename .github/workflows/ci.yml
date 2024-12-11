@@ -7,7 +7,6 @@ on:
         - '.github/workflows/**'
         - '!dev/**'
   pull_request:
-    branches: [ master ]
 
   workflow_dispatch:
 
