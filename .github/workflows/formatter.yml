@@ -28,7 +28,7 @@ jobs:
         id: ruff_formatter_suggestions
         with:
           changed-files: 'true'
-          args: format --diff
+          args: format --diff --target-version py38
 
       # This only runs if the PR is NOT from a forked repo
       - name: Format files using ruff
