@@ -116,10 +116,9 @@ def dbt_diff(
 
     futures = {}
 
-    with (
-        log_status_handler.status if log_status_handler else nullcontext(),
-        ThreadPoolExecutor(max_workers=dbt_parser.threads) as executor,
-    ):
+    with log_status_handler.status if log_status_handler else nullcontext(), ThreadPoolExecutor(
+        max_workers=dbt_parser.threads
+    ) as executor:
         for model in models:
             if log_status_handler:
                 log_status_handler.set_prefix(f"Diffing {model.alias} \n")
