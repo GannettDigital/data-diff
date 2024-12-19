@@ -23,7 +23,9 @@ tracking.disable_tracking()
 
 # We write 'or None' because Github sometimes creates empty env vars for secrets
 TEST_MYSQL_CONN_STRING: str = os.environ.get("DATADIFF_MYSQL_URI", "mysql://mysql:Password1@localhost/mysql") or None
-TEST_POSTGRESQL_CONN_STRING: str = os.environ.get("DATADIFF_POSTGRESQL_URI", "postgresql://postgres:Password1@localhost/postgres") or None
+TEST_POSTGRESQL_CONN_STRING: str = (
+    os.environ.get("DATADIFF_POSTGRESQL_URI", "postgresql://postgres:Password1@localhost/postgres") or None
+)
 TEST_SNOWFLAKE_CONN_STRING: str = os.environ.get("DATADIFF_SNOWFLAKE_URI") or None
 TEST_PRESTO_CONN_STRING: str = os.environ.get("DATADIFF_PRESTO_URI") or None
 TEST_BIGQUERY_CONN_STRING: str = os.environ.get("DATADIFF_BIGQUERY_URI") or None
@@ -32,9 +34,13 @@ TEST_ORACLE_CONN_STRING: str = None
 TEST_DATABRICKS_CONN_STRING: str = os.environ.get("DATADIFF_DATABRICKS_URI")
 TEST_TRINO_CONN_STRING: str = os.environ.get("DATADIFF_TRINO_URI") or None
 # clickhouse uri for provided docker - "clickhouse://clickhouse:Password1@localhost:9000/clickhouse"
-TEST_CLICKHOUSE_CONN_STRING: str = os.environ.get("DATADIFF_CLICKHOUSE_URI", "clickhouse://clickhouse:Password1@localhost:9000/clickhouse") or None
+TEST_CLICKHOUSE_CONN_STRING: str = (
+    os.environ.get("DATADIFF_CLICKHOUSE_URI", "clickhouse://clickhouse:Password1@localhost:9000/clickhouse") or None
+)
 # vertica uri provided for docker - "vertica://vertica:Password1@localhost:5433/vertica"
-TEST_VERTICA_CONN_STRING: str = os.environ.get("DATADIFF_VERTICA_URI", "vertica://vertica:Password1@localhost:5433/vertica") or None
+TEST_VERTICA_CONN_STRING: str = (
+    os.environ.get("DATADIFF_VERTICA_URI", "vertica://vertica:Password1@localhost:5433/vertica") or None
+)
 TEST_DUCKDB_CONN_STRING: str = os.environ.get("DATADIFF_DUCKDB_URI", "duckdb://main:@:memory:") or None
 TEST_MSSQL_CONN_STRING: str = os.environ.get("DATADIFF_MSSQL_URI")
 
