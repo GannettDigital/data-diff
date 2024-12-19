@@ -27,7 +27,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Packages
-	run:  chmod +x tests/install-packages.sh && ./tests/install-packages.sh
+        run:  chmod +x tests/install-packages.sh && ./tests/install-packages.sh
 
       - name: Build the stack
         run: docker-compose up -d mysql postgres presto trino clickhouse vertica
