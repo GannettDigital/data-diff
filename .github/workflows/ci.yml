@@ -36,7 +36,7 @@ jobs:
         run: pip install poetry
 
       - name: Install package
-        run: poetry lock --no-update && poetry install
+        run: poetry install
 
       # BigQuery start
     #   - id: 'auth'
