@@ -105,6 +105,7 @@ class HashDiffer(TableDiffer):
     bisection_factor: int = DEFAULT_BISECTION_FACTOR
     bisection_threshold: int = DEFAULT_BISECTION_THRESHOLD
     bisection_disabled: bool = False  # i.e. always download the rows (used in tests)
+    stop_at_top_level: bool = False
 
     stats: dict = attrs.field(factory=dict)
 
@@ -177,6 +178,25 @@ class HashDiffer(TableDiffer):
         segment_index=None,
         segment_count=None,
     ):
+        if table1.chunk_offset is not None:
+            # For chunks, directly compare the rows
+            rows1, rows2 = self._threaded_call("get_values", [table1, table2])
+            diff = list(
+                diff_sets(
+                    rows1,
+                    rows2,
+                    json_cols=None,
+                    columns1=table1.relevant_columns,
+                    columns2=table2.relevant_columns,
+                    key_columns1=table1.key_columns,
+                    key_columns2=table2.key_columns,
+                    ignored_columns1=self.ignored_columns1,
+                    ignored_columns2=self.ignored_columns2,
+                )
+            )
+            info_tree.info.set_diff(diff)
+            return diff
+
         logger.info(
             ". " * level + f"Diffing segment {segment_index}/{segment_count}, "
             f"key-range: {table1.min_key}..{table2.max_key}, "
@@ -212,6 +232,12 @@ class HashDiffer(TableDiffer):
             return
 
         info_tree.info.is_diff = True
+
+        # If at top level and stop_at_top_level is True, just return
+        if level == 0 and self.stop_at_top_level:
+            logger.info("Differences found at top level. Stopping as requested.")
+            return
+
         return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2))
 
     def _bisect_and_diff_segments(
