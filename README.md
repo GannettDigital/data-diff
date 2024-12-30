@@ -213,6 +213,10 @@ Your database not listed here?
 </details>
 <br>
 
+## Chunk-Level Comparison
+
+When comparing large tables, you can now opt to stop at the chunk level instead of drilling down to individual rows:
+
 For detailed algorithm and performance insights, explore [here](https://github.com/datafold/data-diff/blob/master/docs/technical-explanation.md), or head to our docs to [learn more about how Datafold diffs data](https://docs.datafold.com/data_diff/how-datafold-diffs-data).
 
 ## Contributors

@@ -197,6 +197,16 @@ class TableDiffer(ThreadBase, ABC):
     ignored_columns2: Set[str] = attrs.field(factory=set)
     _ignored_columns_lock: threading.Lock = attrs.field(factory=threading.Lock, init=False)
     yield_list: bool = False
+    stop_at_chunk_level: bool = False
+    min_chunk_size: Optional[int] = None
+
+    def _should_stop_at_chunk(self, chunk_size: int) -> bool:
+        """Determine if diffing should stop at the current chunk level"""
+        if not self.stop_at_chunk_level:
+            return False
+        if self.min_chunk_size is None:
+            return True
+        return chunk_size <= self.min_chunk_size
 
     def diff_tables(self, table1: TableSegment, table2: TableSegment, info_tree: InfoTree = None) -> DiffResultWrapper:
         """Diff the given tables.
@@ -284,7 +294,18 @@ class TableDiffer(ThreadBase, ABC):
         level=0,
         segment_index=None,
         segment_count=None,
-    ): ...
+    ):
+        # ...existing code...
+
+        if self._should_stop_at_chunk(min(table1.count(), table2.count())):
+            yield {
+                'chunk_start': table1.min_key,
+                'chunk_end': table1.max_key,
+                'status': 'CHUNK_DIFF'
+            }
+            return
+
+        # ...existing code...
 
     def _bisect_and_diff_tables(self, table1: TableSegment, table2: TableSegment, info_tree):
         if len(table1.key_columns) != len(table2.key_columns):

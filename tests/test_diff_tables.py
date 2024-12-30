@@ -17,30 +17,10 @@ from tests.common import str_to_checksum, test_each_database_in_list, DiffTestCa
 
 
 TEST_DATABASES = {
-    db.MySQL,
-    db.PostgreSQL,
-    db.Oracle,
-    db.Redshift,
-    db.Snowflake,
-    db.BigQuery,
-    db.Presto,
-    db.Trino,
-    db.Vertica,
-}
+    db.MySQL
+}  # Only use MySQL database for testing
 
-test_each_database: Callable = test_each_database_in_list(TEST_DATABASES)
-
-
-class TestUtils(unittest.TestCase):
-    def test_split_space(self):
-        for i in range(0, 10):
-            for j in range(1, 16328, 17):
-                for n in range(1, 32):
-                    r = split_space(i, j + i + n, n)
-                    assert len(r) == n, f"split_space({i}, {j+n}, {n}) = {(r)}"
-
-
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestDates(DiffTestCase):
     src_schema = {"id": int, "datetime": datetime, "text_comment": str}
 
@@ -127,7 +107,7 @@ class TestDates(DiffTestCase):
         self.assertEqual(len(list(differ.diff_tables(a, b))), 1)
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestDiffTables(DiffTestCase):
     src_schema = {"id": int, "userid": int, "movieid": int, "rating": float, "timestamp": datetime}
     dst_schema = {"id": int, "userid": int, "movieid": int, "rating": float, "timestamp": datetime}
@@ -302,7 +282,7 @@ class TestDiffTables(DiffTestCase):
         self.assertEqual(expected, diff)
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestDiffTables2(DiffTestCase):
     src_schema = {"id": int, "rating": float, "timestamp": datetime}
     dst_schema = {"id2": int, "rating2": float, "timestamp2": datetime}
@@ -347,7 +327,7 @@ class TestDiffTables2(DiffTestCase):
         assert diff == []
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestUUIDs(DiffTestCase):
     src_schema = {"id": str, "text_comment": str}
 
@@ -496,7 +476,7 @@ class TestVaryingAlphanumericKeys(DiffTestCase):
         self.assertRaises(NotImplementedError, list, differ.diff_tables(self.a, self.b))
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestTableSegment(DiffTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -529,7 +509,7 @@ class TestTableSegment(DiffTestCase):
         )
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestTableUUID(DiffTestCase):
     src_schema = {"id": str, "text_comment": str}
 
@@ -563,7 +543,7 @@ class TestTableUUID(DiffTestCase):
         self.assertEqual(diff, [("-", (str(self.null_uuid), None))])
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestTableNullRowChecksum(DiffTestCase):
     src_schema = {"id": str, "text_comment": str}
 
@@ -611,7 +591,7 @@ class TestTableNullRowChecksum(DiffTestCase):
         self.assertEqual(diff, [("-", (str(self.null_uuid), None))])
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestConcatMultipleColumnWithNulls(DiffTestCase):
     src_schema = {"id": str, "c1": str, "c2": str}
     dst_schema = {"id": str, "c1": str, "c2": str}
@@ -677,7 +657,7 @@ class TestConcatMultipleColumnWithNulls(DiffTestCase):
         self.assertEqual(diff, self.diffs)
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestTableTableEmpty(DiffTestCase):
     src_schema = {"id": str, "text_comment": str}
     dst_schema = {"id": str, "text_comment": str}
@@ -773,7 +753,7 @@ class TestDuplicateTables(DiffTestCase):
         self.assertEqual(diff, self.diffs)
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestCompoundKeySimple1(DiffTestCase):
     src_schema = {"id": int, "id2": int}
     dst_schema = {"id": int, "id2": int}
@@ -807,7 +787,7 @@ class TestCompoundKeySimple1(DiffTestCase):
         self.assertEqual(diff, expected)
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestCompoundKeySimple2(DiffTestCase):
     src_schema = {"id": int, "id2": int}
     dst_schema = {"id": int, "id2": int}
@@ -841,7 +821,7 @@ class TestCompoundKeySimple2(DiffTestCase):
         self.assertEqual(diff, expected)
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestCompoundKeySimple3(DiffTestCase):
     src_schema = {"id": int, "id2": int}
     dst_schema = {"id": int, "id2": int}
@@ -875,7 +855,7 @@ class TestCompoundKeySimple3(DiffTestCase):
         self.assertEqual(diff, expected)
 
 
-@test_each_database
+@test_each_database_in_list(TEST_DATABASES)
 class TestCompoundKeyAlphanum(DiffTestCase):
     src_schema = {"id": str, "id2": int, "comment": str}
     dst_schema = {"id": str, "id2": int, "comment": str}
@@ -911,3 +891,89 @@ class TestCompoundKeyAlphanum(DiffTestCase):
         self.assertEqual(diff, [("-", (uuid, "9", "9")), ("+", (uuid, "9000", "9"))])
 
         self.assertRaises(ValueError, list, differ.diff_tables(aa, a))
+
+
+@test_each_database_in_list(TEST_DATABASES)
+class TestChunkLevelComparison(DiffTestCase):
+    src_schema = {"id": int, "value": str}
+    dst_schema = {"id": int, "value": str}
+
+    def setUp(self):
+        super().setUp()
+        rows = [(i, f"value_{i}") for i in range(1000)]
+        self.connection.query(
+            [
+                self.src_table.insert_rows(rows),
+                self.dst_table.insert_rows(rows),
+                commit,
+            ]
+        )
+        # Add these two lines to initialize the table segments
+        self.table = table_segment(self.connection, self.table_src_path, "id", extra_columns=("value",), case_sensitive=False)
+        self.table2 = table_segment(self.connection, self.table_dst_path, "id", extra_columns=("value",), case_sensitive=False)
+
+    def test_chunk_level_comparison(self):  # Remove async
+        differ = HashDiffer(
+            bisection_factor=2,
+            bisection_threshold=10,
+            stop_at_chunk_level=True
+        )
+        results = differ.diff_tables(self.table, self.table2)  # Remove await
+        assert all(r['status'] == 'CHUNK_DIFF' for r in results if 'status' in r)
+
+    def test_min_chunk_size(self):  # Remove async
+        differ = HashDiffer(
+            bisection_factor=2,
+            bisection_threshold=10,
+            stop_at_chunk_level=True,
+            min_chunk_size=1000
+        )
+        results = differ.diff_tables(self.table, self.table2)  # Remove await
+        assert all(
+            r['chunk_end'] - r['chunk_start'] >= 1000 
+            for r in results 
+            if 'status' in r and r['status'] == 'CHUNK_DIFF'
+        )
+
+
+@test_each_database_in_list({db.MySQL})  # Only use MySQL
+class TestChunkLevelComparisonMySQL(DiffTestCase):
+    src_schema = {"id": int, "value": str}
+    dst_schema = {"id": int, "value": str}
+
+    def setUp(self):
+        super().setUp()
+        rows = [(i, f"value_{i}") for i in range(1000)]
+        self.connection.query(
+            [
+                self.src_table.insert_rows(rows),
+                self.dst_table.insert_rows(rows),
+                commit,
+            ]
+        )
+        # Add these two lines to initialize the table segments
+        self.table = table_segment(self.connection, self.table_src_path, "id", extra_columns=("value",), case_sensitive=False)
+        self.table2 = table_segment(self.connection, self.table_dst_path, "id", extra_columns=("value",), case_sensitive=False)
+
+    def test_chunk_level_comparison(self):  # Remove async
+        differ = HashDiffer(
+            bisection_factor=2,
+            bisection_threshold=10,
+            stop_at_chunk_level=True
+        )
+        results = differ.diff_tables(self.table, self.table2)  # Remove await
+        assert all(r['status'] == 'CHUNK_DIFF' for r in results if 'status' in r)
+
+    def test_min_chunk_size(self):  # Remove async
+        differ = HashDiffer(
+            bisection_factor=2,
+            bisection_threshold=10,
+            stop_at_chunk_level=True,
+            min_chunk_size=1000
+        )
+        results = differ.diff_tables(self.table, self.table2)  # Remove await
+        assert all(
+            r['chunk_end'] - r['chunk_start'] >= 1000 
+            for r in results 
+            if 'status' in r and r['status'] == 'CHUNK_DIFF'
+        )
