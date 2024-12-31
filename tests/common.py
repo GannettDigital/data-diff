@@ -39,7 +39,7 @@ TEST_CLICKHOUSE_CONN_STRING: str = (
 )
 # vertica uri provided for docker - "vertica://vertica:Password1@localhost:5433/vertica"
 TEST_VERTICA_CONN_STRING: str = (
-    os.environ.get("DATADIFF_VERTICA_URI", "vertica://vertica:Password1@localhost:5433/vertica") or None
+    os.environ.get("DATADIFF_VERTICA_URI", "vertica://vertica:Password1@localhost:5433/vertica?tlsmode=disable") or None
 )
 TEST_DUCKDB_CONN_STRING: str = os.environ.get("DATADIFF_DUCKDB_URI", "duckdb://main:@:memory:") or None
 TEST_MSSQL_CONN_STRING: str = os.environ.get("DATADIFF_MSSQL_URI")
