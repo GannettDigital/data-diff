@@ -27,7 +27,7 @@ jobs:
         uses: chartboost/ruff-action@v1
         id: ruff_formatter_suggestions
         with:
-          args: format --diff --target-version py38
+          args: format --diff --target-version py39
 
       # This only runs if the PR is NOT from a forked repo
       - name: Format files using ruff
