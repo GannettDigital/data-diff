@@ -728,6 +728,27 @@ class TestInfoTree(DiffTestCase):
             assert info_tree.info.diff_count == 1000
             self.assertEqual(info_tree.info.rowcounts, {1: 1000, 2: 2000})
 
+    def test_optimize(self):
+        db = self.connection
+        db.query(
+            [
+                self.src_table.insert_rows([i] for i in range(1000)),
+                self.dst_table.insert_rows([i] for i in range(2000)),
+            ]
+        )
+
+        ts1 = TableSegment(db, self.src_table.path, ("id",))
+        ts2 = TableSegment(db, self.dst_table.path, ("id",))
+
+        differ = HashDiffer(bisection_threshold=64, optimize_flag=True)
+
+        diff_res = differ.diff_tables(ts1, ts2)
+        diff = list(diff_res)
+        info_tree = diff_res.info_tree
+        assert info_tree.info.is_diff
+        assert info_tree.info.diff_count == 1000
+        self.assertEqual(info_tree.info.rowcounts, {1: 1000, 2: 2000})
+
 
 class TestDuplicateTables(DiffTestCase):
     db_cls = db.MySQL

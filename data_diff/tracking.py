@@ -74,7 +74,7 @@ def bool_notify_about_extension() -> bool:
     return False
 
 
-g_tracking_enabled = True
+g_tracking_enabled = False
 g_anonymous_id = None
 
 entrypoint_name = "Python API"

@@ -39,7 +39,7 @@ TEST_CLICKHOUSE_CONN_STRING: str = (
 )
 # vertica uri provided for docker - "vertica://vertica:Password1@localhost:5433/vertica"
 TEST_VERTICA_CONN_STRING: str = (
-    os.environ.get("DATADIFF_VERTICA_URI", "vertica://vertica:Password1@localhost:5433/vertica?tlsmode=disable") or None
+    os.environ.get("DATADIFF_VERTICA_URI", "vertica://vertica:Password1@localhost:5433/vertica") or None
 )
 TEST_DUCKDB_CONN_STRING: str = os.environ.get("DATADIFF_DUCKDB_URI", "duckdb://main:@:memory:") or None
 TEST_MSSQL_CONN_STRING: str = os.environ.get("DATADIFF_MSSQL_URI")
@@ -51,6 +51,7 @@ BENCHMARK = os.environ.get("BENCHMARK", False)
 N_THREADS = int(os.environ.get("N_THREADS", 1))
 TEST_ACROSS_ALL_DBS = os.environ.get("TEST_ACROSS_ALL_DBS", True)  # Should we run the full db<->db test suite?
 
+os.environ['TZ'] = os.environ.get("TEST_TZ", "UTC") # ensure tests do not fail locally, as tests assume TZ=UTC
 
 def get_git_revision_short_hash() -> str:
     return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode("ascii").strip()

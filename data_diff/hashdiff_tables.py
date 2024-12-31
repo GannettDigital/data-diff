@@ -105,6 +105,7 @@ class HashDiffer(TableDiffer):
     bisection_factor: int = DEFAULT_BISECTION_FACTOR
     bisection_threshold: int = DEFAULT_BISECTION_THRESHOLD
     bisection_disabled: bool = False  # i.e. always download the rows (used in tests)
+    optimize_flag: bool = False # enable crap    
 
     stats: dict = attrs.field(factory=dict)
 
@@ -190,6 +191,14 @@ class HashDiffer(TableDiffer):
         if BENCHMARK:
             if self.bisection_disabled or max_rows < self.bisection_threshold:
                 return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max_rows)
+
+        (count1, count2) = self._threaded_call("count", [table1, table2])
+        if count1 != count2 and self.optimize_flag:
+            assert not info_tree.info.rowcounts
+            info_tree.info.rowcounts = {1: count1, 2: count2}
+            info_tree.info.diff_count = abs(count1 - count2)
+            info_tree.info.is_diff = True
+            return
 
         (count1, checksum1), (count2, checksum2) = self._threaded_call("count_and_checksum", [table1, table2])
 
