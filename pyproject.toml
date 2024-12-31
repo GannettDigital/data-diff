@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "data-diff"
-version = "0.11.2"
+version = "0.12.0"
 description = "Command-line tool and Python library to efficiently diff rows across two different databases."
 authors = ["Datafold <data-diff@datafold.com>", "LOCALiQ Data Team <dms-dba@gannett.com>"]
 license = "MIT"
@@ -10,10 +10,10 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "Intended Audience :: System Administrators",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Development Status :: 2 - Pre-Alpha",
     "Environment :: Console",
     "Topic :: Database :: Database Engines/Servers",
@@ -22,12 +22,12 @@ classifiers = [
 packages = [{ include = "data_diff" }]
 [tool.poetry.dependencies]
 pydantic = "<2.0"
-python = ">=3.8.0,<4.0"
+python = ">=3.9.0,<4.0"
 dsnparse = "<0.2.0"
 click = ">=8.1"
 rich = "*"
 toml = ">=0.10.2"
-mysql-connector-python = {version=">=8.0.29", optional=true}
+mysql-connector-python = {version=">=9.1.0", optional=true}
 psycopg2 = {version="*", optional=true}
 snowflake-connector-python = {version = ">=3.0.2,<4.0.0", optional=true}
 cryptography = {version="*", optional=true}
