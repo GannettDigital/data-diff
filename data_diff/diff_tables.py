@@ -193,7 +193,9 @@ class TableDiffer(ThreadBase, ABC):
 
     bisection_factor = 32
     auto_bisection_factor = False
-    segment_rows     = os.environ.get("DEFAULT_SEGMENT_ROWS", 50000)
+    segment_rows: int = attrs.field(
+        factory = lambda:  int(os.environ.get("DEFAULT_SEGMENT_ROWS", 50000))
+    )
     stats: dict = {}
 
     ignored_columns1: Set[str] = attrs.field(factory=set)
@@ -208,6 +210,7 @@ class TableDiffer(ThreadBase, ABC):
             rows: amount of rows in the given table or segment
         """
         ratio = rows / self.segment_rows
+        logger.info(f"rows: {rows}, self.segment_rows: {self.segment_rows}, ratio: {ratio}")
         if 0 < ratio < 2:
             return 2
         else:
@@ -391,11 +394,10 @@ class TableDiffer(ThreadBase, ABC):
 
         # Choose evenly spaced checkpoints (according to min_key and max_key)
         biggest_table = max(table1, table2, key=methodcaller("approximate_size"))
-
-        # Set initial bisection factor automatically on fist iteration
-        if self.auto_bisection_factor and level==0:
+        logger.info(f"Diff segments level: {level}")
+        if self.auto_bisection_factor:
             self.bisection_factor = self.calculate_bisection_factor(biggest_table.approximate_size())
-
+            logger.info(f"Automatically setting bisection_factor, max_rows: {max_rows}, self.bisection_factor: {self.bisection_factor}")
         checkpoints = biggest_table.choose_checkpoints(self.bisection_factor - 1)
 
         # Get it thread-safe, to avoid segment misalignment because of bad timing.

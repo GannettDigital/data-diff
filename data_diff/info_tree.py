@@ -41,6 +41,19 @@ class SegmentInfo:
             2: sum(c.rowcounts[2] for c in child_infos if c.rowcounts),
         }
 
+    def to_dict(self) -> Dict[str, Any]:
+        # Convert tables to something JSON-serializable (e.g., their names)
+        # or call table.to_dict() if TableSegment provides such a method
+        return {
+            "tables": [str(t) for t in self.tables],  # or t.to_dict() if available
+            "diff": self.diff,
+            "diff_schema": self.diff_schema,
+            "is_diff": self.is_diff,
+            "diff_count": self.diff_count,
+            "rowcounts": self.rowcounts,
+            "max_rows": self.max_rows,
+        }
+
 
 @attrs.define(frozen=True)
 class InfoTree:
@@ -60,3 +73,9 @@ class InfoTree:
             for c in self.children:
                 c.aggregate_info()
             self.info.update_from_children(c.info for c in self.children)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "info": self.info.to_dict(),
+            "children": [child.to_dict() for child in self.children],
+        }

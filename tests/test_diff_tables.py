@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Callable
 import uuid
 import unittest
+import os
 
 import attrs
 
@@ -733,12 +734,29 @@ class TestInfoTree(DiffTestCase):
             self.assertEqual(info_tree.info.rowcounts, {1: 1000, 2: 2000})
 
     def test_auto_bisection_factor(self):
-        # set segment rows to 100 for testing of bisection_factor calculations
-        os.environ["DEFAULT_SEGMENT_ROWS"] = "100"
-        differ = HashDiffer(auto_bisection_factor=True, bisection_threshold=99)
-        diff_res = differ.diff_tables(self.ts1, self.ts2)
-        self.assertEqual(bisection_factor=19)
+        """
+        test expected segments = bisection factor x 2
+        with table size of 1000 rows and default segment_rows=100 we should get 10 bisection factor and 20 segments
+        with table size of 1000 rows and deafult segment_rows=50000 we should get minum bisecton factor 2 and  4 segments
+        """
+        MIN_EXPECTED_BISECTION_FACTOR = 2
+        with unittest.mock.patch.dict(os.environ, {"DEFAULT_SEGMENT_ROWS": "100"}):
+            differ = HashDiffer(auto_bisection_factor=True, bisection_threshold=100)
+            diff_res = differ.diff_tables(self.ts1, self.ts2)
+            diff = list(diff_res)
+            segments = []
+            for child in diff_res.info_tree.to_dict()["children"]:
+                segments.append(child["info"]["rowcounts"])
+            self.assertEqual(len(segments), (1000/100) * 2, msg=f"response: {diff_res}")
 
+
+        differ = HashDiffer(auto_bisection_factor=True, bisection_threshold=100)
+        diff_res = differ.diff_tables(self.ts1, self.ts2)
+        diff = list(diff_res)
+        segments = []
+        for child in diff_res.info_tree.to_dict()["children"]:
+            segments.append(child["info"]["rowcounts"])
+        self.assertEqual(len(segments), MIN_EXPECTED_BISECTION_FACTOR * 2, msg=f"response: {diff_res}")
 
 class TestDuplicateTables(DiffTestCase):
     db_cls = db.MySQL

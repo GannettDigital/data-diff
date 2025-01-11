@@ -388,10 +388,10 @@ def _get_table_differ(
     sample_exclusive_rows: bool,
     materialize_all_rows: bool,
     table_write_limit: int,
-    auto_bisection_factor: bool,
     materialize_to_table: Optional[str],
     bisection_factor: Optional[int],
     bisection_threshold: Optional[int],
+    auto_bisection_factor: Optional[bool],
 ) -> TableDiffer:
     algorithm = Algorithm(algorithm)
     if algorithm == Algorithm.AUTO:
