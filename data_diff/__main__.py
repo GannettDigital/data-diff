@@ -149,6 +149,11 @@ click.Context.formatter_class = MyHelpFormatter
     metavar="NUM",
 )
 @click.option(
+    "--auto-bisection-factor",
+    is_flag=True,
+    help=f"Automatically calculate bisection-factor based on amount of rows in the biggest table. --bisection-factor=NUM will be ignored",
+)
+@click.option(
     "-m",
     "--materialize-to-table",
     default=None,
@@ -383,6 +388,7 @@ def _get_table_differ(
     sample_exclusive_rows: bool,
     materialize_all_rows: bool,
     table_write_limit: int,
+    auto_bisection_factor: bool,
     materialize_to_table: Optional[str],
     bisection_factor: Optional[int],
     bisection_threshold: Optional[int],
@@ -412,6 +418,7 @@ def _get_table_differ(
         bisection_threshold=DEFAULT_BISECTION_THRESHOLD if bisection_threshold is None else bisection_threshold,
         threaded=threaded,
         max_threadpool_size=threads and threads * 2,
+        auto_bisection_factor=auto_bisection_factor,
     )
 
 
@@ -495,6 +502,7 @@ def _data_diff(
     algorithm,
     bisection_factor,
     bisection_threshold,
+    auto_bisection_factor,
     min_age,
     max_age,
     stats,
@@ -560,6 +568,7 @@ def _data_diff(
             sample_exclusive_rows,
             materialize_all_rows,
             table_write_limit,
+            auto_bisection_factor,
             materialize_to_table,
             bisection_factor,
             bisection_threshold,

@@ -707,8 +707,11 @@ class TestTableTableEmpty(DiffTestCase):
 class TestInfoTree(DiffTestCase):
     db_cls = db.MySQL
     src_schema = dst_schema = dict(id=int)
+    ts1 = ts2 = None
 
-    def test_info_tree_root(self):
+    def setUp(self):
+        super().setUp()
+
         db = self.connection
         db.query(
             [
@@ -717,16 +720,24 @@ class TestInfoTree(DiffTestCase):
             ]
         )
 
-        ts1 = TableSegment(db, self.src_table.path, ("id",))
-        ts2 = TableSegment(db, self.dst_table.path, ("id",))
+        self.ts1 = TableSegment(db, self.src_table.path, ("id",))
+        self.ts2 = TableSegment(db, self.dst_table.path, ("id",))
 
+    def test_info_tree_root(self):
         for differ in (HashDiffer(bisection_threshold=64), JoinDiffer(True)):
-            diff_res = differ.diff_tables(ts1, ts2)
+            diff_res = differ.diff_tables(self.ts1, self.ts2)
             diff = list(diff_res)
             info_tree = diff_res.info_tree
             assert info_tree.info.is_diff
             assert info_tree.info.diff_count == 1000
             self.assertEqual(info_tree.info.rowcounts, {1: 1000, 2: 2000})
+
+    def test_auto_bisection_factor(self):
+        # set segment rows to 100 for testing of bisection_factor calculations
+        os.environ["DEFAULT_SEGMENT_ROWS"] = "100"
+        differ = HashDiffer(auto_bisection_factor=True, bisection_threshold=99)
+        diff_res = differ.diff_tables(self.ts1, self.ts2)
+        self.assertEqual(bisection_factor=19)
 
 
 class TestDuplicateTables(DiffTestCase):

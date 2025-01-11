@@ -105,6 +105,7 @@ class HashDiffer(TableDiffer):
     bisection_factor: int = DEFAULT_BISECTION_FACTOR
     bisection_threshold: int = DEFAULT_BISECTION_THRESHOLD
     bisection_disabled: bool = False  # i.e. always download the rows (used in tests)
+    auto_bisection_factor: bool = False
 
     stats: dict = attrs.field(factory=dict)
 

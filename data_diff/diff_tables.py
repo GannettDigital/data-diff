@@ -2,6 +2,7 @@
 
 import threading
 import time
+import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from contextlib import contextmanager
@@ -191,12 +192,26 @@ class TableDiffer(ThreadBase, ABC):
     INFO_TREE_CLASS = InfoTree
 
     bisection_factor = 32
+    auto_bisection_factor = False
+    segment_rows     = os.environ.get("DEFAULT_SEGMENT_ROWS", 50000)
     stats: dict = {}
 
     ignored_columns1: Set[str] = attrs.field(factory=set)
     ignored_columns2: Set[str] = attrs.field(factory=set)
     _ignored_columns_lock: threading.Lock = attrs.field(factory=threading.Lock, init=False)
     yield_list: bool = False
+
+    def calculate_bisection_factor(self, rows):
+        """Calculate biscetion factor based on row count
+
+        Parameters:
+            rows: amount of rows in the given table or segment
+        """
+        ratio = rows / self.segment_rows
+        if 0 < ratio < 2:
+            return 2
+        else:
+            return round(ratio)
 
     def diff_tables(self, table1: TableSegment, table2: TableSegment, info_tree: InfoTree = None) -> DiffResultWrapper:
         """Diff the given tables.
@@ -376,6 +391,11 @@ class TableDiffer(ThreadBase, ABC):
 
         # Choose evenly spaced checkpoints (according to min_key and max_key)
         biggest_table = max(table1, table2, key=methodcaller("approximate_size"))
+
+        # Set initial bisection factor automatically on fist iteration
+        if self.auto_bisection_factor and level==0:
+            self.bisection_factor = self.calculate_bisection_factor(biggest_table.approximate_size())
+
         checkpoints = biggest_table.choose_checkpoints(self.bisection_factor - 1)
 
         # Get it thread-safe, to avoid segment misalignment because of bad timing.
