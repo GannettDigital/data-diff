@@ -167,7 +167,7 @@ class TestGetTableDiffer(unittest.TestCase):
 
     @staticmethod
     def _get_differ(algorithm, db1, db2):
-        return _get_table_differ(algorithm, db1, db2, False, 1, False, False, False, 1, None, None, None)
+        return _get_table_differ(algorithm, db1, db2, False, 1, False, False, False, 1, None, None, None, False)
 
 
 class TestGetExpandedColumns(DiffTestCase):

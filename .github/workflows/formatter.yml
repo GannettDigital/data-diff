@@ -21,6 +21,13 @@ jobs:
         uses: actions/checkout@v3
         if: github.event_name == 'workflow_dispatch'
 
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            **/*.py
+
       # This is used for forked PRs as write permissions are required to format files
       - name: Run and commit changes with `ruff format .` locally on your forked branch to fix errors if they appear
         if: ${{ github.event.pull_request.head.repo.fork == true }}
@@ -28,6 +35,7 @@ jobs:
         id: ruff_formatter_suggestions
         with:
           args: format --diff --target-version py38
+          src: "${{ steps.changed-files.outputs.all_changed_files }}" 
 
       # This only runs if the PR is NOT from a forked repo
       - name: Format files using ruff

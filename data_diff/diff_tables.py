@@ -2,6 +2,7 @@
 
 import threading
 import time
+import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from contextlib import contextmanager
@@ -161,7 +162,7 @@ class DiffResultWrapper:
             string_output += f"{diff_stats.diff_by_sign['+']} rows exclusive to table B (not present in A)\n"
             string_output += f"{diff_stats.diff_by_sign['!']} rows updated\n"
             string_output += f"{diff_stats.unchanged} rows unchanged\n"
-            string_output += f"{100*diff_stats.diff_percent:.2f}% difference score\n"
+            string_output += f"{100 * diff_stats.diff_percent:.2f}% difference score\n"
 
             if self.stats:
                 string_output += "\nExtra-Info:\n"
@@ -191,12 +192,27 @@ class TableDiffer(ThreadBase, ABC):
     INFO_TREE_CLASS = InfoTree
 
     bisection_factor = 32
+    auto_bisection_factor = False
+    segment_rows: int = attrs.field(factory=lambda: int(os.environ.get("DEFAULT_SEGMENT_ROWS", 50000)))
     stats: dict = {}
 
     ignored_columns1: Set[str] = attrs.field(factory=set)
     ignored_columns2: Set[str] = attrs.field(factory=set)
     _ignored_columns_lock: threading.Lock = attrs.field(factory=threading.Lock, init=False)
     yield_list: bool = False
+
+    def calculate_bisection_factor(self, rows):
+        """Calculate biscetion factor based on row count
+
+        Parameters:
+            rows: amount of rows in the given table or segment
+        """
+        ratio = rows / self.segment_rows
+        logger.info(f"rows: {rows}, self.segment_rows: {self.segment_rows}, ratio: {ratio}")
+        if 0 < ratio < 2:
+            return 2
+        else:
+            return round(ratio)
 
     def diff_tables(self, table1: TableSegment, table2: TableSegment, info_tree: InfoTree = None) -> DiffResultWrapper:
         """Diff the given tables.
@@ -376,6 +392,12 @@ class TableDiffer(ThreadBase, ABC):
 
         # Choose evenly spaced checkpoints (according to min_key and max_key)
         biggest_table = max(table1, table2, key=methodcaller("approximate_size"))
+        logger.info(f"Diff segments level: {level}")
+        if self.auto_bisection_factor:
+            self.bisection_factor = self.calculate_bisection_factor(biggest_table.approximate_size())
+            logger.info(
+                f"Automatically setting bisection_factor, max_rows: {max_rows}, self.bisection_factor: {self.bisection_factor}"
+            )
         checkpoints = biggest_table.choose_checkpoints(self.bisection_factor - 1)
 
         # Get it thread-safe, to avoid segment misalignment because of bad timing.

@@ -149,6 +149,11 @@ click.Context.formatter_class = MyHelpFormatter
     metavar="NUM",
 )
 @click.option(
+    "--auto-bisection-factor",
+    is_flag=True,
+    help=f"Automatically calculate bisection-factor based on amount of rows in the biggest table. --bisection-factor=NUM will be ignored",
+)
+@click.option(
     "-m",
     "--materialize-to-table",
     default=None,
@@ -386,6 +391,7 @@ def _get_table_differ(
     materialize_to_table: Optional[str],
     bisection_factor: Optional[int],
     bisection_threshold: Optional[int],
+    auto_bisection_factor: Optional[bool],
 ) -> TableDiffer:
     algorithm = Algorithm(algorithm)
     if algorithm == Algorithm.AUTO:
@@ -412,6 +418,7 @@ def _get_table_differ(
         bisection_threshold=DEFAULT_BISECTION_THRESHOLD if bisection_threshold is None else bisection_threshold,
         threaded=threaded,
         max_threadpool_size=threads and threads * 2,
+        auto_bisection_factor=auto_bisection_factor,
     )
 
 
@@ -495,6 +502,7 @@ def _data_diff(
     algorithm,
     bisection_factor,
     bisection_threshold,
+    auto_bisection_factor,
     min_age,
     max_age,
     stats,
@@ -560,6 +568,7 @@ def _data_diff(
             sample_exclusive_rows,
             materialize_all_rows,
             table_write_limit,
+            auto_bisection_factor,
             materialize_to_table,
             bisection_factor,
             bisection_threshold,
@@ -611,7 +620,7 @@ def _data_diff(
         _print_result(stats, json_output, diff_iter)
 
     end = time.monotonic()
-    logging.info(f"Duration: {end-start:.2f} seconds.")
+    logging.info(f"Duration: {end - start:.2f} seconds.")
 
 
 if __name__ == "__main__":
