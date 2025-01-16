@@ -38,7 +38,7 @@ class TestUtils(unittest.TestCase):
             for j in range(1, 16328, 17):
                 for n in range(1, 32):
                     r = split_space(i, j + i + n, n)
-                    assert len(r) == n, f"split_space({i}, {j+n}, {n}) = {(r)}"
+                    assert len(r) == n, f"split_space({i}, {j + n}, {n}) = {(r)}"
 
 
 @test_each_database
@@ -747,8 +747,7 @@ class TestInfoTree(DiffTestCase):
             segments = []
             for child in diff_res.info_tree.to_dict()["children"]:
                 segments.append(child["info"]["rowcounts"])
-            self.assertEqual(len(segments), (1000/100) * 2, msg=f"response: {diff_res}")
-
+            self.assertEqual(len(segments), (1000 / 100) * 2, msg=f"response: {diff_res}")
 
         differ = HashDiffer(auto_bisection_factor=True, bisection_threshold=100)
         diff_res = differ.diff_tables(self.ts1, self.ts2)
@@ -757,6 +756,7 @@ class TestInfoTree(DiffTestCase):
         for child in diff_res.info_tree.to_dict()["children"]:
             segments.append(child["info"]["rowcounts"])
         self.assertEqual(len(segments), MIN_EXPECTED_BISECTION_FACTOR * 2, msg=f"response: {diff_res}")
+
 
 class TestDuplicateTables(DiffTestCase):
     db_cls = db.MySQL

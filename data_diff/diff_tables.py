@@ -162,7 +162,7 @@ class DiffResultWrapper:
             string_output += f"{diff_stats.diff_by_sign['+']} rows exclusive to table B (not present in A)\n"
             string_output += f"{diff_stats.diff_by_sign['!']} rows updated\n"
             string_output += f"{diff_stats.unchanged} rows unchanged\n"
-            string_output += f"{100*diff_stats.diff_percent:.2f}% difference score\n"
+            string_output += f"{100 * diff_stats.diff_percent:.2f}% difference score\n"
 
             if self.stats:
                 string_output += "\nExtra-Info:\n"
@@ -193,9 +193,7 @@ class TableDiffer(ThreadBase, ABC):
 
     bisection_factor = 32
     auto_bisection_factor = False
-    segment_rows: int = attrs.field(
-        factory = lambda:  int(os.environ.get("DEFAULT_SEGMENT_ROWS", 50000))
-    )
+    segment_rows: int = attrs.field(factory=lambda: int(os.environ.get("DEFAULT_SEGMENT_ROWS", 50000)))
     stats: dict = {}
 
     ignored_columns1: Set[str] = attrs.field(factory=set)
@@ -397,7 +395,9 @@ class TableDiffer(ThreadBase, ABC):
         logger.info(f"Diff segments level: {level}")
         if self.auto_bisection_factor:
             self.bisection_factor = self.calculate_bisection_factor(biggest_table.approximate_size())
-            logger.info(f"Automatically setting bisection_factor, max_rows: {max_rows}, self.bisection_factor: {self.bisection_factor}")
+            logger.info(
+                f"Automatically setting bisection_factor, max_rows: {max_rows}, self.bisection_factor: {self.bisection_factor}"
+            )
         checkpoints = biggest_table.choose_checkpoints(self.bisection_factor - 1)
 
         # Get it thread-safe, to avoid segment misalignment because of bad timing.

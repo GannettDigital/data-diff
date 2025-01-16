@@ -620,7 +620,7 @@ def _data_diff(
         _print_result(stats, json_output, diff_iter)
 
     end = time.monotonic()
-    logging.info(f"Duration: {end-start:.2f} seconds.")
+    logging.info(f"Duration: {end - start:.2f} seconds.")
 
 
 if __name__ == "__main__":
