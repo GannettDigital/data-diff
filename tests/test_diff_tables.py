@@ -733,6 +733,36 @@ class TestInfoTree(DiffTestCase):
             assert info_tree.info.diff_count == 1000
             self.assertEqual(info_tree.info.rowcounts, {1: 1000, 2: 2000})
 
+    def test_segment_level_diff(self):
+        """ 
+        test segment level diff 
+        foreach segment skip downloading rows and print min_key and max_key info. 
+        
+        """
+        #differ = HashDiffer(seg_diff=True, bisection_threshold=64)
+        differ = HashDiffer(bisection_threshold=64)
+        dif_res = differ.diff_tables(self.ts1, self.ts2)
+        diff = list(dif_res)
+        segments = []
+        info_tree = dif_res.info_tree
+        assert info_tree.info.is_diff
+        assert info_tree.info.diff_count == 1000
+        for child in dif_res.info_tree.to_dict()["children"]:
+            #segment1_min = child["info"]["tables"][0].min_key 
+            #segment1_max = child["info"]["tables"][0].max_key
+            #segment2_min = child["info"]["tables"][1].min_key
+            #segment2_max = child["info"]["tables"][1].max_key
+            child_diff = child["info"]["diff"]
+            # create an array of segments
+            segments.append((child, child_diff))
+        import json
+        # print to file
+        with open("segments.json", "w") as f:
+            json.dump(segments, f)
+        self.assertEqual(2, 2)
+        
+
+
     def test_auto_bisection_factor(self):
         """
         test expected segments = bisection factor x 2

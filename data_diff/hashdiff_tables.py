@@ -26,7 +26,7 @@ _Op = Literal["+", "-"]
 _PK = Sequence[Any]
 _Row = Tuple[Any]
 
-
+# We do not want the diff_sets function in line 237 when specific flag is set -  flag segment-level-diff. We want to know that there is a diff and print it. - Kurt
 def diff_sets(
     a: Sequence[_Row],
     b: Sequence[_Row],
@@ -241,6 +241,7 @@ class HashDiffer(TableDiffer):
                 for i, colname in enumerate(table1.extra_columns)
                 if isinstance(table1._schema[colname], JSON)
             }
+            """ I don't want to use the diff_sets function here. I want to know that there is a diff and print it. - Kurt """
             diff = list(
                 diff_sets(
                     rows1,
@@ -256,7 +257,9 @@ class HashDiffer(TableDiffer):
             )
 
             info_tree.info.set_diff(diff)
+            #info_tree.info.key_range = (table1.min_key, table2.max_key)
             info_tree.info.rowcounts = {1: len(rows1), 2: len(rows2)}
+
 
             logger.info(". " * level + f"Diff found {len(diff)} different rows.")
             self.stats["rows_downloaded"] = self.stats.get("rows_downloaded", 0) + max(len(rows1), len(rows2))

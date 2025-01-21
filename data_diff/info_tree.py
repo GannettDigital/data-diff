@@ -14,10 +14,12 @@ class SegmentInfo:
     diff_schema: Optional[Tuple[Tuple[str, type], ...]] = None
     is_diff: Optional[bool] = None
     diff_count: Optional[int] = None
+    #key_range: Optional[Tuple[Any, Any]] = None
 
     rowcounts: Dict[int, int] = attrs.field(factory=dict)
     max_rows: Optional[int] = None
-
+   
+    
     def set_diff(
         self, diff: List[Union[Tuple[Any, ...], List[Any]]], schema: Optional[Tuple[Tuple[str, type]]] = None
     ) -> None:
