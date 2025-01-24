@@ -284,3 +284,27 @@ class TableSegment:
         diff = self.max_key - self.min_key
         assert all(d > 0 for d in diff)
         return int_product(diff)
+
+    def _calculate_key_range(self):
+        # Query the database for minimum and maximum keys within the segment
+        select = self.make_select().select(
+            *[min_(this[k]).as_(f"min_{k}") for k in self.key_columns],
+            *[max_(this[k]).as_(f"max_{k}") for k in self.key_columns]
+        )
+        result = self.database.query(select, tuple)
+        
+        if any(r is None for r in result):
+            raise ValueError("Segment appears to be empty.")
+        
+        # Extract min and max for each key column
+        min_keys = result[:len(self.key_columns)]
+        max_keys = result[len(self.key_columns):]
+        
+        # Assuming single key column for simplicity; adjust if multiple
+        if len(self.key_columns) == 1:
+            start, end = min_keys[0], max_keys[0]
+        else:
+            start = tuple(min_keys)
+            end = tuple(max_keys)
+        
+        self.key_range = [f"({start})", f"({end})"]  # Set as list with single parentheses
