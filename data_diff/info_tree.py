@@ -14,12 +14,11 @@ class SegmentInfo:
     diff_schema: Optional[Tuple[Tuple[str, type], ...]] = None
     is_diff: Optional[bool] = None
     diff_count: Optional[int] = None
-    #key_range: Optional[Tuple[Any, Any]] = None
+    key_range: Optional[List[str]] = None  # Change to list of strings with single parentheses - Kurt
 
     rowcounts: Dict[int, int] = attrs.field(factory=dict)
     max_rows: Optional[int] = None
-   
-    
+
     def set_diff(
         self, diff: List[Union[Tuple[Any, ...], List[Any]]], schema: Optional[Tuple[Tuple[str, type]]] = None
     ) -> None:
@@ -27,6 +26,10 @@ class SegmentInfo:
         self.diff = diff
         self.diff_count = len(diff)
         self.is_diff = self.diff_count > 0
+        # Set key_range as a list with single parentheses
+        # Example: ["(1)", "(3)"]
+        if self.key_range:
+            self.key_range = [f"({self.key_range[0]})", f"({self.key_range[1]})"]  # Enclose in single parentheses
 
     def update_from_children(self, child_infos) -> None:
         child_infos = list(child_infos)
@@ -42,6 +45,10 @@ class SegmentInfo:
             1: sum(c.rowcounts[1] for c in child_infos if c.rowcounts),
             2: sum(c.rowcounts[2] for c in child_infos if c.rowcounts),
         }
+        children = list(child_infos)  # Iterate over child_infos
+        min_start = min(child.key_range[0] for child in children if child.key_range)
+        max_end = max(child.key_range[1] for child in children if child.key_range)
+        self.key_range = [f"({min_start})", f"({max_end})"]  # Update to list with single parentheses using min and max
 
     def to_dict(self) -> Dict[str, Any]:
         # Convert tables to something JSON-serializable (e.g., their names)
@@ -52,6 +59,7 @@ class SegmentInfo:
             "diff_schema": self.diff_schema,
             "is_diff": self.is_diff,
             "diff_count": self.diff_count,
+            "key_range": list(self.key_range) if self.key_range else None,  # Convert to list for JSON serialization - Kurt
             "rowcounts": self.rowcounts,
             "max_rows": self.max_rows,
         }
@@ -70,11 +78,16 @@ class InfoTree:
         self.children.append(node)
         return node
 
-    def aggregate_info(self) -> None:
+    def aggregate_info(self, segment_level_diff: bool = False) -> None:
         if self.children:
             for c in self.children:
-                c.aggregate_info()
-            self.info.update_from_children(c.info for c in self.children)
+                c.aggregate_info(segment_level_diff)
+            if not segment_level_diff:
+                children = list(self.children)
+                min_start = min(child.info.key_range[0] for child in self.children if child.info.key_range)
+                max_end = max(child.info.key_range[1] for child in self.children if child.info.key_range)
+                self.info.key_range = [f"({min_start})", f"({max_end})"]  # Aggregate only if not segment-level
+            # If segment_level_diff is True, do not aggregate key_range
 
     def to_dict(self) -> Dict[str, Any]:
         return {

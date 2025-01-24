@@ -284,6 +284,11 @@ click.Context.formatter_class = MyHelpFormatter
     default=None,
     help="Override the dbt production schema configuration within dbt_project.yml",
 )
+@click.option(
+    "--segment-level-diff",
+    is_flag=True,
+    help="Only report that segments differ without downloading rows for detailed comparison",
+)
 def main(conf, run, **kw) -> None:
     log_handlers = _get_log_handlers(kw["dbt"])
     if kw["table2"] is None and kw["database2"]:
@@ -392,6 +397,7 @@ def _get_table_differ(
     bisection_factor: Optional[int],
     bisection_threshold: Optional[int],
     auto_bisection_factor: Optional[bool],
+    segment_level_diff: bool,  # Add new parameter
 ) -> TableDiffer:
     algorithm = Algorithm(algorithm)
     if algorithm == Algorithm.AUTO:
@@ -419,10 +425,11 @@ def _get_table_differ(
         threaded=threaded,
         max_threadpool_size=threads and threads * 2,
         auto_bisection_factor=auto_bisection_factor,
+        segment_level_diff=segment_level_diff,  # Pass the new parameter
     )
 
 
-def _print_result(stats, json_output, diff_iter) -> None:
+def _print_result(stats, json_output, diff_iter, segment_level_diff: bool) -> None:
     if stats:
         if json_output:
             rich.print(json.dumps(diff_iter.get_stats_dict()))
@@ -430,17 +437,41 @@ def _print_result(stats, json_output, diff_iter) -> None:
             rich.print(diff_iter.get_stats_string())
 
     else:
-        for op, values in diff_iter:
-            color = COLOR_SCHEME.get(op, "grey62")
+        # Keep track of total counts - Kurt
+        total_counts = {1: 0, 2: 0}
+        segments_found = 0
 
+        for op, values in diff_iter:
+            if op == 'diff':
+                # Print segment-level-diff info for each segment - Kurt
+                info = diff_iter.info_tree.info
+                # Pass the segment_level_diff flag
+                info.key_range = info.key_range  # Ensure it's a list
+                range_str = info.key_range  # key_range is already a list with single parentheses
+                text = f"+ Segment {segments_found + 1} differs: {range_str}, counts: {info.rowcounts.get(1, 0)}/{info.rowcounts.get(2, 0)}"
+                rich.print(f"[green]{text}[/green]")
+                segments_found += 1
+                continue
+
+            color = COLOR_SCHEME.get(op, "grey62")
             if json_output:
-                jsonl = json.dumps([op, list(values)])
+                # Fix the syntax error in the conditional expression - Kurt
+                value_list = list(values) if values is not None else None
+                jsonl = json.dumps([op, value_list])
                 rich.print(f"[{color}]{jsonl}[/{color}]")
             else:
-                text = f"{op} {', '.join(map(str, values))}"
+                if values is not None:
+                    text = f"{op} {', '.join(map(str, values))}"
+                else:
+                    text = f"{op}"
                 rich.print(f"[{color}]{text}[/{color}]")
 
             sys.stdout.flush()
+
+        if segments_found:
+            # Print summary after all segments - Kurt
+            rich.print(f"\nFound {segments_found} differing segments")
+            rich.print(f"Total rows compared: {total_counts[1]}/{total_counts[2]}")
 
 
 def _get_expanded_columns(
@@ -528,6 +559,7 @@ def _data_diff(
     prod_schema,
     select,
     state,
+    segment_level_diff=False,  # Add new parameter
     threads1=None,
     threads2=None,
     __conf__=None,
@@ -572,6 +604,7 @@ def _data_diff(
             materialize_to_table,
             bisection_factor,
             bisection_threshold,
+            segment_level_diff,  # Pass the new parameter
         )
 
         table_names = table1, table2
@@ -617,7 +650,7 @@ def _data_diff(
             assert not stats
             diff_iter = islice(diff_iter, int(limit))
 
-        _print_result(stats, json_output, diff_iter)
+        _print_result(stats, json_output, diff_iter, segment_level_diff)
 
     end = time.monotonic()
     logging.info(f"Duration: {end - start:.2f} seconds.")

@@ -2,7 +2,7 @@ import os
 from numbers import Number
 import logging
 from collections import defaultdict
-from typing import Any, Collection, Dict, Iterator, List, Sequence, Set, Tuple
+from typing import Any, Collection, Dict, Iterator, List, Sequence, Set, Tuple, Union
 
 import attrs
 from typing_extensions import Literal
@@ -25,6 +25,10 @@ logger = logging.getLogger("hashdiff_tables")
 _Op = Literal["+", "-"]
 _PK = Sequence[Any]
 _Row = Tuple[Any]
+
+# Add these near the top with the other type definitions - Kurt
+DiffResult = Iterator[Tuple[str, tuple]]  # Iterator[Tuple[Literal["+", "-"], tuple]]
+DiffResultList = Iterator[List[Tuple[str, tuple]]]
 
 # We do not want the diff_sets function in line 237 when specific flag is set -  flag segment-level-diff. We want to know that there is a diff and print it. - Kurt
 def diff_sets(
@@ -106,6 +110,7 @@ class HashDiffer(TableDiffer):
     bisection_threshold: int = DEFAULT_BISECTION_THRESHOLD
     bisection_disabled: bool = False  # i.e. always download the rows (used in tests)
     auto_bisection_factor: bool = False
+    segment_level_diff: bool = False  # Add this line to enable/disable segment-level diff
 
     stats: dict = attrs.field(factory=dict)
 
@@ -178,42 +183,28 @@ class HashDiffer(TableDiffer):
         segment_index=None,
         segment_count=None,
     ):
-        logger.info(
-            ". " * level + f"Diffing segment {segment_index}/{segment_count}, "
-            f"key-range: {table1.min_key}..{table2.max_key}, "
-            f"size <= {max_rows}"
-        )
-
-        # When benchmarking, we want the ability to skip checksumming. This
-        # allows us to download all rows for comparison in performance. By
-        # default, data-diff will checksum the section first (when it's below
-        # the threshold) and _then_ download it.
-        if BENCHMARK:
-            if self.bisection_disabled or max_rows < self.bisection_threshold:
-                return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max_rows)
-
+        # Get initial counts and key range - Kurt
         (count1, checksum1), (count2, checksum2) = self._threaded_call("count_and_checksum", [table1, table2])
-
-        assert not info_tree.info.rowcounts
-        info_tree.info.rowcounts = {1: count1, 2: count2}
-
-        if count1 == 0 and count2 == 0:
-            logger.debug(
-                "Uneven distribution of keys detected in segment %s..%s (big gaps in the key column). "
-                "For better performance, we recommend to increase the bisection-threshold.",
-                table1.min_key,
-                table1.max_key,
-            )
-            assert checksum1 is None and checksum2 is None
-            info_tree.info.is_diff = False
-            return
+        
+        # Store counts for the segment
+        info_tree.info.rowcounts = {1: count1 or 0, 2: count2 or 0}
+        info_tree.info.key_range = (
+            str(table1.min_key if table1.min_key is not None else "start"),
+            str(table2.max_key if table2.max_key is not None else "end")
+        )
 
         if checksum1 == checksum2:
             info_tree.info.is_diff = False
             return
 
-        info_tree.info.is_diff = True
-        return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2))
+        if self.segment_level_diff:
+            # Report this segment as differing - Kurt
+            info_tree.info.is_diff = True
+            logger.info(f". " * level + f"Difference detected in segment {table1.min_key}..{table2.max_key}")
+            # Don't return here, so we can keep bisecting - Kurt
+
+        # Continue normal bisection process if not using segment_level_diff
+        return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max(count1 or 0, count2 or 0))
 
     def _bisect_and_diff_segments(
         self,
@@ -235,13 +226,33 @@ class HashDiffer(TableDiffer):
         # If count is below the threshold, just download and compare the columns locally
         # This saves time, as bisection speed is limited by ping and query performance.
         if self.bisection_disabled or max_rows < self.bisection_threshold or max_space_size < self.bisection_factor * 2:
+            if self.segment_level_diff:
+                # Skip downloading rows, just check counts and checksum - Kurt
+                (count1, checksum1), (count2, checksum2) = self._threaded_call("count_and_checksum", [table1, table2])
+                if checksum1 != checksum2:
+                    info_tree.info.is_diff = True
+                    info_tree.info.key_range = (
+                        str(table1.min_key if table1.min_key is not None else "start"),
+                        str(table2.max_key if table2.max_key is not None else "end")
+                    )
+                    info_tree.info.rowcounts = {1: count1 or 0, 2: count2 or 0}
+                    logger.info(
+                        f". " * level + f"Difference detected in segment {table1.min_key}..{table2.max_key} "
+                        f"(counts: {count1 or 0}/{count2 or 0})"
+                    )
+                    # Store info but return simplified diff format - Kurt
+                    return [('diff', None)]
+                return []
+
+            # Original row download and comparison logic
             rows1, rows2 = self._threaded_call("get_values", [table1, table2])
             json_cols = {
                 i: colname
                 for i, colname in enumerate(table1.extra_columns)
                 if isinstance(table1._schema[colname], JSON)
             }
-            """ I don't want to use the diff_sets function here. I want to know that there is a diff and print it. - Kurt """
+
+            # Original detailed diff behavior
             diff = list(
                 diff_sets(
                     rows1,
@@ -257,12 +268,29 @@ class HashDiffer(TableDiffer):
             )
 
             info_tree.info.set_diff(diff)
-            #info_tree.info.key_range = (table1.min_key, table2.max_key)
             info_tree.info.rowcounts = {1: len(rows1), 2: len(rows2)}
-
-
             logger.info(". " * level + f"Diff found {len(diff)} different rows.")
-            self.stats["rows_downloaded"] = self.stats.get("rows_downloaded", 0) + max(len(rows1), len(rows2))
             return diff
 
+        if self.segment_level_diff:
+            # For each sub-segment, just mark them as diff without downloading rows - Kurt
+            info_tree.info.is_diff = True
+            info_tree.info.key_range = (
+                str(table1.min_key if table1.min_key else "start"),
+                str(table2.max_key if table2.max_key else "end")
+            )
+            return [('diff', None)]
+
         return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)
+
+    def _diff_tables_root(self, table1: TableSegment, table2: TableSegment, info_tree: InfoTree) -> Union[DiffResult, DiffResultList]:
+        # Get initial total counts for the tables - Kurt
+        if self.segment_level_diff:
+            (count1, _), (count2, _) = self._threaded_call("count_and_checksum", [table1, table2])
+            info_tree.info.rowcounts = {1: count1 or 0, 2: count2 or 0}
+            info_tree.info.key_range = (
+                str(table1.min_key if table1.min_key is not None else "start"),
+                str(table2.max_key if table2.max_key is not None else "end")
+            )
+
+        return self._bisect_and_diff_tables(table1, table2, info_tree)

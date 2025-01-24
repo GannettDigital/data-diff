@@ -81,6 +81,8 @@ def diff_tables(
     table_write_limit: int = TABLE_WRITE_LIMIT,
     # Skips diffing any rows with null keys. (joindiff only)
     skip_null_keys: bool = False,
+    # Add new parameter
+    segment_level_diff: bool = False,
 ) -> Iterator:
     """Finds the diff between table1 and table2.
 
@@ -110,6 +112,7 @@ def diff_tables(
         materialize_all_rows (bool): Materialize every row, not just those that are different. (used for `JOINDIFF`. default: False)
         table_write_limit (int): Maximum number of rows to write when materializing, per thread.
         skip_null_keys (bool): Skips diffing any rows with null PKs (displays a warning if any are null) (used for `JOINDIFF`. default: False)
+        segment_level_diff (bool): Enable/disable segment level diffing. (used for `HASHDIFF`. default: False)
 
     Note:
         The following parameters are used to override the corresponding attributes of the given :class:`TableSegment` instances:
@@ -159,6 +162,7 @@ def diff_tables(
             bisection_threshold=bisection_threshold,
             threaded=threaded,
             max_threadpool_size=max_threadpool_size,
+            segment_level_diff=segment_level_diff,  # Add the new parameter
         )
     elif algorithm == Algorithm.JOINDIFF:
         if isinstance(materialize_to_table, str):
