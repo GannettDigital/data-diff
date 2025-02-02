@@ -187,11 +187,8 @@ class HashDiffer(TableDiffer):
                 "processing_segment": {
                     "index": segment_index,
                     "total_segments": segment_count,
-                    "key_range": {
-                        "min_key": str(table1.min_key),
-                        "max_key": str(table2.max_key)
-                    },
-                    "max_rows": max_rows
+                    "key_range": {"min_key": str(table1.min_key), "max_key": str(table2.max_key)},
+                    "max_rows": max_rows,
                 }
             }
             print(json.dumps(segment_progress, indent=2))
@@ -236,17 +233,14 @@ class HashDiffer(TableDiffer):
             # Calculate diff_count before creating the JSON - Added by Kurt Larsen
             if checksum1 != checksum2:
                 info_tree.info.diff_count = max(count1, count2)  # Conservative estimate
-            
+
             segment_json = {
                 "diff_found_in_segment": {
                     "segment_index": segment_index,
                     "total_segments": segment_count,
-                    "key_range": {
-                        "min_key": str(table1.min_key),
-                        "max_key": str(table1.max_key)
-                    },
+                    "key_range": {"min_key": str(table1.min_key), "max_key": str(table1.max_key)},
                     "row_counts": info_tree.info.rowcounts,
-                    "diff_count": info_tree.info.diff_count
+                    "diff_count": info_tree.info.diff_count,
                 }
             }
             print(json.dumps(segment_json, indent=2))
