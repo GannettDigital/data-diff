@@ -1,4 +1,5 @@
 import os
+import json  # Added by Kurt Larsen
 from numbers import Number
 import logging
 from collections import defaultdict
@@ -100,12 +101,14 @@ class HashDiffer(TableDiffer):
         max_threadpool_size (int): Maximum size of each threadpool. ``None`` means auto.
                                    Only relevant when `threaded` is ``True``.
                                    There may be many pools, so number of actual threads can be a lot higher.
+        segment_range_diff (bool): If True, includes segment range info when differences are found
     """
 
     bisection_factor: int = DEFAULT_BISECTION_FACTOR
     bisection_threshold: int = DEFAULT_BISECTION_THRESHOLD
     bisection_disabled: bool = False  # i.e. always download the rows (used in tests)
     auto_bisection_factor: bool = False
+    segment_range_diff: bool = False  # Added by Kurt Larsen
 
     stats: dict = attrs.field(factory=dict)
 
@@ -178,6 +181,21 @@ class HashDiffer(TableDiffer):
         segment_index=None,
         segment_count=None,
     ):
+        # Added by Kurt Larsen - Print segment info for all segments when flag is enabled
+        if self.segment_range_diff:
+            segment_progress = {
+                "processing_segment": {
+                    "index": segment_index,
+                    "total_segments": segment_count,
+                    "key_range": {
+                        "min_key": str(table1.min_key),
+                        "max_key": str(table2.max_key)
+                    },
+                    "max_rows": max_rows
+                }
+            }
+            print(json.dumps(segment_progress, indent=2))
+
         logger.info(
             ". " * level + f"Diffing segment {segment_index}/{segment_count}, "
             f"key-range: {table1.min_key}..{table2.max_key}, "
@@ -213,6 +231,26 @@ class HashDiffer(TableDiffer):
             return
 
         info_tree.info.is_diff = True
+
+        if self.segment_range_diff and info_tree.info.is_diff:
+            # Calculate diff_count before creating the JSON - Added by Kurt Larsen
+            if checksum1 != checksum2:
+                info_tree.info.diff_count = max(count1, count2)  # Conservative estimate
+            
+            segment_json = {
+                "diff_found_in_segment": {
+                    "segment_index": segment_index,
+                    "total_segments": segment_count,
+                    "key_range": {
+                        "min_key": str(table1.min_key),
+                        "max_key": str(table1.max_key)
+                    },
+                    "row_counts": info_tree.info.rowcounts,
+                    "diff_count": info_tree.info.diff_count
+                }
+            }
+            print(json.dumps(segment_json, indent=2))
+
         return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2))
 
     def _bisect_and_diff_segments(
