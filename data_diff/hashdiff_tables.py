@@ -181,18 +181,6 @@ class HashDiffer(TableDiffer):
         segment_index=None,
         segment_count=None,
     ):
-        # Added by Kurt Larsen - Print segment info for all segments when flag is enabled
-        if self.segment_range_diff:
-            segment_progress = {
-                "processing_segment": {
-                    "index": segment_index,
-                    "total_segments": segment_count,
-                    "key_range": {"min_key": str(table1.min_key), "max_key": str(table2.max_key)},
-                    "max_rows": max_rows,
-                }
-            }
-            print(json.dumps(segment_progress, indent=2))
-
         logger.info(
             ". " * level + f"Diffing segment {segment_index}/{segment_count}, "
             f"key-range: {table1.min_key}..{table2.max_key}, "
@@ -234,6 +222,7 @@ class HashDiffer(TableDiffer):
             if checksum1 != checksum2:
                 info_tree.info.diff_count = max(count1, count2)  # Conservative estimate
 
+            # Added by Kurt Larsen - Only show segments with differences
             segment_json = {
                 "diff_found_in_segment": {
                     "segment_index": segment_index,
