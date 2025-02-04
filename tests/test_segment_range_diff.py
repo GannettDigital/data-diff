@@ -90,3 +90,18 @@ class TestSegmentRangeDiff(DiffTestCase):
         # Verify the differences are still found
         diff = list(diff_res)
         self.assertEqual(len(diff), 2)  # One removal and one addition
+
+    def test_segment_range_diff(self):
+        """Test that segment range info is printed"""
+        differ = HashDiffer(
+            bisection_factor=4,
+            bisection_threshold=10,
+            segment_range_diff=True
+        )
+
+        # Run diff
+        diff_res = differ.diff_tables(self.table1, self.table2)
+        results = list(diff_res)
+        
+        # Basic verification
+        self.assertEqual(len(results), 2)  # One removal and one addition

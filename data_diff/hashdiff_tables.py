@@ -108,7 +108,7 @@ class HashDiffer(TableDiffer):
     bisection_threshold: int = DEFAULT_BISECTION_THRESHOLD
     bisection_disabled: bool = False  # i.e. always download the rows (used in tests)
     auto_bisection_factor: bool = False
-    segment_range_diff: bool = False  # Added by Kurt Larsen
+    segment_range_diff: bool = False  # Added by Kurt Larsen - Flag to control segment range output
 
     stats: dict = attrs.field(factory=dict)
 
@@ -293,5 +293,9 @@ class HashDiffer(TableDiffer):
             logger.info(". " * level + f"Diff found {len(diff)} different rows.")
             self.stats["rows_downloaded"] = self.stats.get("rows_downloaded", 0) + max(len(rows1), len(rows2))
             return diff
+
+        # Added by Kurt Larsen - Skip local download when segment_range_diff is True
+        if self.segment_range_diff:
+            return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)
 
         return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)
