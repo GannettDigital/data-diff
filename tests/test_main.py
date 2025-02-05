@@ -136,38 +136,10 @@ class TestSetAge(unittest.TestCase):
 
 
 class TestGetTableDiffer(unittest.TestCase):
-    def _get_differ(
-        self,
-        algorithm: str,
-        db1: Database,
-        db2: Database,
-        threaded: bool = False,
-        threads: int = 1,
-        assume_unique_key: bool = False,
-        sample_exclusive_rows: bool = False,
-        materialize_all_rows: bool = False,
-        table_write_limit: int = 1,
-        materialize_to_table: Optional[str] = None,
-        bisection_factor: Optional[int] = None,
-        bisection_threshold: Optional[int] = None,
-        auto_bisection_factor: Optional[bool] = False,
-        segment_range_diff: bool = False,  # Added by Kurt Larsen
-    ) -> TableDiffer:
+    def _get_differ(self, algorithm: str, db1: Database, db2: Database) -> TableDiffer:
+        # Modified by Kurt Larsen - Simplified parameter passing
         return _get_table_differ(
-            algorithm,
-            db1,
-            db2,
-            threaded,
-            threads,
-            assume_unique_key,
-            sample_exclusive_rows,
-            materialize_all_rows,
-            table_write_limit,
-            materialize_to_table,
-            bisection_factor,
-            bisection_threshold,
-            auto_bisection_factor,
-            segment_range_diff,  # Added by Kurt Larsen
+            algorithm, db1, db2, False, 1, False, False, False, 1, None, None, None, False, False
         )
 
     def test__get_table_differ(self):
