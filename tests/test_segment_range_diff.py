@@ -46,11 +46,7 @@ class TestSegmentRangeDiff(DiffTestCase):
     def test_segment_range_diff(self):
         """Test that segment range info is printed and handled correctly"""
         # Modified by Kurt Larsen - Combine test methods to avoid duplicate output
-        differ = HashDiffer(
-            bisection_factor=4,
-            bisection_threshold=10,
-            segment_range_diff=True
-        )
+        differ = HashDiffer(bisection_factor=4, bisection_threshold=10, segment_range_diff=True)
 
         # Run diff and collect results
         diff_res = differ.diff_tables(self.table1, self.table2)
@@ -75,11 +71,7 @@ class TestSegmentRangeDiff(DiffTestCase):
 
     def test_segment_range_diff_disabled(self):
         """Test that segment range info is not included when flag is disabled"""
-        differ = HashDiffer(
-            bisection_factor=4,
-            bisection_threshold=10,
-            segment_range_diff=False
-        )
+        differ = HashDiffer(bisection_factor=4, bisection_threshold=10, segment_range_diff=False)
         diff_res = differ.diff_tables(self.table1, self.table2)
         diff = list(diff_res)
         self.assertEqual(len(diff), 2)  # One removal and one addition
