@@ -111,6 +111,7 @@ class HashDiffer(TableDiffer):
     segment_range_diff: bool = False  # Added by Kurt Larsen - Flag to control segment range output
 
     stats: dict = attrs.field(factory=dict)
+    _processed_segments: set = attrs.field(factory=set, init=False)  # Added by Kurt Larsen - Track processed segments
 
     def __attrs_post_init__(self) -> None:
         # Validate options
@@ -181,6 +182,16 @@ class HashDiffer(TableDiffer):
         segment_index=None,
         segment_count=None,
     ):
+        # Added by Kurt Larsen - Track processed segments to avoid duplicates
+        segment_key = f"{table1.min_key}..{table1.max_key}"
+        if not hasattr(self, "_processed_segments"):
+            self._processed_segments = set()
+
+        if segment_key in self._processed_segments:
+            return
+
+        self._processed_segments.add(segment_key)
+
         logger.info(
             ". " * level + f"Diffing segment {segment_index}/{segment_count}, "
             f"key-range: {table1.min_key}..{table2.max_key}, "
@@ -236,25 +247,15 @@ class HashDiffer(TableDiffer):
 
         return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2))
 
-    def _bisect_and_diff_segments(
-        self,
-        ti: ThreadedYielder,
-        table1: TableSegment,
-        table2: TableSegment,
-        info_tree: InfoTree,
-        level=0,
-        max_rows=None,
-    ):
+    def _bisect_and_diff_segments(self, ti, table1, table2, info_tree, level=0, max_rows=None):
         assert table1.is_bounded and table2.is_bounded
 
         max_space_size = max(table1.approximate_size(), table2.approximate_size())
         if max_rows is None:
-            # We can be sure that row_count <= max_rows iff the table key is unique
             max_rows = max_space_size
             info_tree.info.max_rows = max_rows
 
-        # If count is below the threshold, just download and compare the columns locally
-        # This saves time, as bisection speed is limited by ping and query performance.
+        # If count is below the threshold, download and compare locally
         if self.bisection_disabled or max_rows < self.bisection_threshold or max_space_size < self.bisection_factor * 2:
             rows1, rows2 = self._threaded_call("get_values", [table1, table2])
             json_cols = {
@@ -282,9 +283,5 @@ class HashDiffer(TableDiffer):
             logger.info(". " * level + f"Diff found {len(diff)} different rows.")
             self.stats["rows_downloaded"] = self.stats.get("rows_downloaded", 0) + max(len(rows1), len(rows2))
             return diff
-
-        # Added by Kurt Larsen - Skip local download when segment_range_diff is True
-        if self.segment_range_diff:
-            return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)
 
         return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)
