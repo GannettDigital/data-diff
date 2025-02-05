@@ -80,7 +80,7 @@ class InfoTree:
             for child in self.children:
                 if not child._processed:
                     child.aggregate_info()
-            
+
             # Update current node's info from children
             self.info.update_from_children(child.info for child in self.children)
 
