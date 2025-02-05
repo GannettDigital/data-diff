@@ -55,12 +55,13 @@ class SegmentInfo:
         }
 
 
-@attrs.define(frozen=True)
+@attrs.define(frozen=False)
 class InfoTree:
     SEGMENT_INFO_CLASS = SegmentInfo
 
     info: SegmentInfo
     children: List["InfoTree"] = attrs.field(factory=list)
+    _processed: bool = attrs.field(default=False, init=False)  # Added by Kurt Larsen - Track processing state
 
     def add_node(self, table1: TableSegment, table2: TableSegment, max_rows: Optional[int] = None) -> Self:
         cls = self.__class__
@@ -69,10 +70,22 @@ class InfoTree:
         return node
 
     def aggregate_info(self) -> None:
+        """Modified to prevent infinite recursion"""
+        # Skip if already processed
+        if self._processed:
+            return
+
         if self.children:
-            for c in self.children:
-                c.aggregate_info()
-            self.info.update_from_children(c.info for c in self.children)
+            # Process children first (if not already processed)
+            for child in self.children:
+                if not child._processed:
+                    child.aggregate_info()
+            
+            # Update current node's info from children
+            self.info.update_from_children(child.info for child in self.children)
+
+        # Mark as processed
+        self._processed = True
 
     def to_dict(self) -> Dict[str, Any]:
         return {

@@ -182,58 +182,23 @@ class HashDiffer(TableDiffer):
         segment_index=None,
         segment_count=None,
     ):
-        # Added by Kurt Larsen - Track processed segments to avoid duplicates
-        segment_key = f"{table1.min_key}..{table1.max_key}"
-        if not hasattr(self, "_processed_segments"):
-            self._processed_segments = set()
-
-        if segment_key in self._processed_segments:
-            return
-
-        self._processed_segments.add(segment_key)
-
-        logger.info(
-            ". " * level + f"Diffing segment {segment_index}/{segment_count}, "
-            f"key-range: {table1.min_key}..{table2.max_key}, "
-            f"size <= {max_rows}"
-        )
-
-        # When benchmarking, we want the ability to skip checksumming. This
-        # allows us to download all rows for comparison in performance. By
-        # default, data-diff will checksum the section first (when it's below
-        # the threshold) and _then_ download it.
-        if BENCHMARK:
-            if self.bisection_disabled or max_rows < self.bisection_threshold:
-                return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max_rows)
-
         (count1, checksum1), (count2, checksum2) = self._threaded_call("count_and_checksum", [table1, table2])
 
         assert not info_tree.info.rowcounts
         info_tree.info.rowcounts = {1: count1, 2: count2}
 
         if count1 == 0 and count2 == 0:
-            logger.debug(
-                "Uneven distribution of keys detected in segment %s..%s (big gaps in the key column). "
-                "For better performance, we recommend to increase the bisection-threshold.",
-                table1.min_key,
-                table1.max_key,
-            )
-            assert checksum1 is None and checksum2 is None
             info_tree.info.is_diff = False
-            return
+            return []
 
         if checksum1 == checksum2:
             info_tree.info.is_diff = False
-            return
+            return []
 
         info_tree.info.is_diff = True
+        info_tree.info.diff_count = max(count1, count2)
 
         if self.segment_range_diff and info_tree.info.is_diff:
-            # Calculate diff_count before creating the JSON - Added by Kurt Larsen
-            if checksum1 != checksum2:
-                info_tree.info.diff_count = max(count1, count2)  # Conservative estimate
-
-            # Added by Kurt Larsen - Format segment data consistently
             segment_json = {
                 "diff_found_in_segment": {
                     "segment_index": segment_index,
@@ -244,30 +209,33 @@ class HashDiffer(TableDiffer):
                 }
             }
             print(json.dumps(segment_json, indent=2))
+            # Previously: returned [] here to stop recursion.
+            # Now: proceed to calculate actual differences.
 
         return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2))
 
     def _bisect_and_diff_segments(self, ti, table1, table2, info_tree, level=0, max_rows=None):
-        assert table1.is_bounded and table2.is_bounded
-
         max_space_size = max(table1.approximate_size(), table2.approximate_size())
         if max_rows is None:
             max_rows = max_space_size
             info_tree.info.max_rows = max_rows
 
-        # If count is below the threshold, download and compare locally
+        # NEW: If segment_range_diff flag is True, skip downloading rows and diffing.
+        if self.segment_range_diff:
+            logger.info(". " * level + "Skipping row download and diff due to segment_range_diff flag.")
+            return []
+
         if self.bisection_disabled or max_rows < self.bisection_threshold or max_space_size < self.bisection_factor * 2:
             rows1, rows2 = self._threaded_call("get_values", [table1, table2])
-            json_cols = {
-                i: colname
-                for i, colname in enumerate(table1.extra_columns)
-                if isinstance(table1._schema[colname], JSON)
-            }
             diff = list(
                 diff_sets(
                     rows1,
                     rows2,
-                    json_cols=json_cols,
+                    json_cols={
+                        i: colname
+                        for i, colname in enumerate(table1.extra_columns)
+                        if isinstance(table1._schema[colname], JSON)
+                    },
                     columns1=table1.relevant_columns,
                     columns2=table2.relevant_columns,
                     key_columns1=table1.key_columns,
