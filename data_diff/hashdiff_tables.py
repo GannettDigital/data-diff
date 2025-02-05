@@ -222,7 +222,7 @@ class HashDiffer(TableDiffer):
             if checksum1 != checksum2:
                 info_tree.info.diff_count = max(count1, count2)  # Conservative estimate
 
-            # Added by Kurt Larsen - Only show segments with differences
+            # Added by Kurt Larsen - Format segment data consistently
             segment_json = {
                 "diff_found_in_segment": {
                     "segment_index": segment_index,

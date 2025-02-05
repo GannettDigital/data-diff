@@ -43,61 +43,43 @@ class TestSegmentRangeDiff(DiffTestCase):
             self.connection, self.table_dst_path, "id", "timestamp", extra_columns=("value",), case_sensitive=False
         )
 
-    def test_segment_range_diff_output(self):
-        """Test that segment range info is printed when flag is enabled"""
-        differ = HashDiffer(bisection_factor=4, bisection_threshold=10, segment_range_diff=True)
+    def test_segment_range_diff(self):
+        """Test that segment range info is printed and handled correctly"""
+        # Modified by Kurt Larsen - Combine test methods to avoid duplicate output
+        differ = HashDiffer(
+            bisection_factor=4,
+            bisection_threshold=10,
+            segment_range_diff=True
+        )
+
+        # Run diff and collect results
         diff_res = differ.diff_tables(self.table1, self.table2)
+        results = list(diff_res)
 
-        # First, get the complete diff to ensure info_tree is populated
-        diff = list(diff_res)
-
-        # Now check the info tree for segments with diffs
-        segments_with_diffs = []
-        for node in diff_res.info_tree.children:
-            if node.info.is_diff:
-                min_key = str(node.info.tables[0].min_key)  # Changed to use table's min_key
-                max_key = str(node.info.tables[0].max_key)  # Changed to use table's max_key
-                segment_data = {
-                    "key_range": {"min_key": min_key, "max_key": max_key},
-                    "row_counts": node.info.rowcounts,
-                    "diff_count": node.info.diff_count,
-                }
-                segments_with_diffs.append(segment_data)
-
-        # Verify the differences were found and reported correctly
-        self.assertEqual(len(diff), 2)  # One removal and one addition
-        self.assertTrue(len(segments_with_diffs) > 0, "No segments with diffs were reported")
+        # Verify differences were found
+        self.assertEqual(len(results), 2)  # One removal and one addition
 
         # Verify the segment containing row 42 was identified
         found_segment = False
-        for segment in segments_with_diffs:
-            min_key = segment["key_range"]["min_key"]
-            max_key = segment["key_range"]["max_key"]
-            if min_key != "None" and max_key != "None":
-                # Parse the key range values from string format "(X)" to int
-                min_key = int(min_key.strip("()"))
-                max_key = int(max_key.strip("()"))
-                if min_key <= 42 <= max_key:
-                    found_segment = True
-                    break
+        for node in diff_res.info_tree.children:
+            if node.info.is_diff:
+                min_key = str(node.info.tables[0].min_key)
+                max_key = str(node.info.tables[0].max_key)
+                if min_key != "None" and max_key != "None":
+                    min_key = int(min_key.strip("()"))
+                    max_key = int(max_key.strip("()"))
+                    if min_key <= 42 <= max_key:
+                        found_segment = True
+                        break
         self.assertTrue(found_segment, "Segment containing difference was not reported")
 
     def test_segment_range_diff_disabled(self):
         """Test that segment range info is not included when flag is disabled"""
-        differ = HashDiffer(bisection_factor=4, bisection_threshold=10, segment_range_diff=False)
+        differ = HashDiffer(
+            bisection_factor=4,
+            bisection_threshold=10,
+            segment_range_diff=False
+        )
         diff_res = differ.diff_tables(self.table1, self.table2)
-
-        # Verify the differences are still found
         diff = list(diff_res)
         self.assertEqual(len(diff), 2)  # One removal and one addition
-
-    def test_segment_range_diff(self):
-        """Test that segment range info is printed"""
-        differ = HashDiffer(bisection_factor=4, bisection_threshold=10, segment_range_diff=True)
-
-        # Run diff
-        diff_res = differ.diff_tables(self.table1, self.table2)
-        results = list(diff_res)
-
-        # Basic verification
-        self.assertEqual(len(results), 2)  # One removal and one addition
