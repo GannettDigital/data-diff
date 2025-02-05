@@ -138,9 +138,7 @@ class TestSetAge(unittest.TestCase):
 class TestGetTableDiffer(unittest.TestCase):
     def _get_differ(self, algorithm: str, db1: Database, db2: Database) -> TableDiffer:
         # Modified by Kurt Larsen - Simplified parameter passing
-        return _get_table_differ(
-            algorithm, db1, db2, False, 1, False, False, False, 1, None, None, None, False, False
-        )
+        return _get_table_differ(algorithm, db1, db2, False, 1, False, False, False, 1, None, None, None, False, False)
 
     def test__get_table_differ(self):
         db1: Database
