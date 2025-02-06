@@ -236,7 +236,7 @@ class HashDiffer(TableDiffer):
         # NEW: If segment_range_diff flag is True, skip downloading rows and diffing.
         if self.segment_range_diff:
             logger.info(". " * level + "Skipping row download and diff due to segment_range_diff flag.")
-            return []
+            return
 
         if self.bisection_disabled or max_rows < self.bisection_threshold or max_space_size < self.bisection_factor * 2:
             rows1, rows2 = self._threaded_call("get_values", [table1, table2])
@@ -265,9 +265,6 @@ class HashDiffer(TableDiffer):
             self.stats["rows_downloaded"] = self.stats.get("rows_downloaded", 0) + max(len(rows1), len(rows2))
             return diff
 
-        if segment_index is not None:
-            return super()._bisect_and_diff_segments(
-                ti, table1, table2, info_tree, level, max_rows, segment_index=segment_index, segment_count=segment_count
-            )
-        else:
-            return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)
+        return super()._bisect_and_diff_segments(
+            ti, table1, table2, info_tree, level, max_rows, segment_index=segment_index, segment_count=segment_count
+        )
