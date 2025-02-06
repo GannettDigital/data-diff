@@ -302,7 +302,9 @@ class TableDiffer(ThreadBase, ABC):
         table2 = table2.new_key_bounds(min_key=min_key1, max_key=max_key1, key_types=key_types2)
 
         max_rows = max(table1.approximate_size(), table2.approximate_size())
-        diff_res = self._diff_segments(ti, table1, table2, info_tree, max_rows=max_rows, segment_index=0, segment_count=1)  # Pass initial values
+        diff_res = self._diff_segments(
+            ti, table1, table2, info_tree, max_rows=max_rows, segment_index=0, segment_count=1
+        )  # Pass initial values
         return ti
 
     @abstractmethod
@@ -316,7 +318,8 @@ class TableDiffer(ThreadBase, ABC):
         level=0,
         segment_index=None,
         segment_count=None,
-    ): ...
+    ):
+        ...
 
     def _bisect_and_diff_tables(self, table1: TableSegment, table2: TableSegment, info_tree):
         if len(table1.key_columns) != len(table2.key_columns):

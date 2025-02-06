@@ -214,9 +214,21 @@ class HashDiffer(TableDiffer):
             return
 
         # Submit the bisect and diff segments task to the ThreadedYielder
-        ti.submit(self._bisect_and_diff_segments, ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2), segment_index=segment_index, segment_count=segment_count)
+        ti.submit(
+            self._bisect_and_diff_segments,
+            ti,
+            table1,
+            table2,
+            info_tree,
+            level=level,
+            max_rows=max(count1, count2),
+            segment_index=segment_index,
+            segment_count=segment_count,
+        )
 
-    def _bisect_and_diff_segments(self, ti, table1, table2, info_tree, level=0, max_rows=None, segment_index=None, segment_count=None):
+    def _bisect_and_diff_segments(
+        self, ti, table1, table2, info_tree, level=0, max_rows=None, segment_index=None, segment_count=None
+    ):
         max_space_size = max(table1.approximate_size(), table2.approximate_size())
         if max_rows is None:
             max_rows = max_space_size
@@ -254,6 +266,8 @@ class HashDiffer(TableDiffer):
             return diff
 
         if segment_index is not None:
-            return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows, segment_index=segment_index, segment_count=segment_count)
+            return super()._bisect_and_diff_segments(
+                ti, table1, table2, info_tree, level, max_rows, segment_index=segment_index, segment_count=segment_count
+            )
         else:
             return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)
