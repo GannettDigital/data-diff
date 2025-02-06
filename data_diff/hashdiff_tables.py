@@ -189,11 +189,11 @@ class HashDiffer(TableDiffer):
 
         if count1 == 0 and count2 == 0:
             info_tree.info.is_diff = False
-            return []
+            return
 
         if checksum1 == checksum2:
             info_tree.info.is_diff = False
-            return []
+            return
 
         info_tree.info.is_diff = True
         info_tree.info.diff_count = max(count1, count2)
@@ -211,14 +211,15 @@ class HashDiffer(TableDiffer):
             print(json.dumps(segment_json, indent=2))
             # Previously: returned [] here to stop recursion.
             # Now: proceed to calculate actual differences.
+            return
 
-        return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2))
+        # Submit the bisect and diff segments task to the ThreadedYielder
+        ti.submit(self._bisect_and_diff_segments, ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2), segment_index=segment_index, segment_count=segment_count)
 
-    def _bisect_and_diff_segments(self, ti, table1, table2, info_tree, level=0, max_rows=None):
+    def _bisect_and_diff_segments(self, ti, table1, table2, info_tree, level=0, max_rows=None, segment_index=None, segment_count=None):
         max_space_size = max(table1.approximate_size(), table2.approximate_size())
         if max_rows is None:
             max_rows = max_space_size
-            info_tree.info.max_rows = max_rows
 
         # NEW: If segment_range_diff flag is True, skip downloading rows and diffing.
         if self.segment_range_diff:
@@ -252,4 +253,7 @@ class HashDiffer(TableDiffer):
             self.stats["rows_downloaded"] = self.stats.get("rows_downloaded", 0) + max(len(rows1), len(rows2))
             return diff
 
-        return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)
+        if segment_index is not None:
+            return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows, segment_index=segment_index, segment_count=segment_count)
+        else:
+            return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)

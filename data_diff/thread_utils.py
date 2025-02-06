@@ -8,6 +8,13 @@ from time import sleep
 from typing import Any, Callable, Iterator, Optional
 
 import attrs
+import queue
+import threading
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any, Callable, Iterable, Iterator, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 class AutoPriorityQueue(PriorityQueue):
@@ -49,31 +56,26 @@ class ThreadedYielder(Iterable):
 
     _pool: ThreadPoolExecutor
     _futures: deque
-    _yield: deque
+    _yield_queue: deque  # Renamed from _yield
     _exception: Optional[None]
-
-    _pool: ThreadPoolExecutor
-    _futures: deque
-    _yield: deque = attrs.field(alias="_yield")  # Python keyword!
-    _exception: Optional[None]
-    yield_list: bool
+    yield_list: bool  # Re-add yield_list
 
     def __init__(self, max_workers: Optional[int] = None, yield_list: bool = False) -> None:
         super().__init__()
         self._pool = PriorityThreadPoolExecutor(max_workers)
         self._futures = deque()
-        self._yield = deque()
+        self._yield_queue = deque()  # Renamed from _yield
         self._exception = None
-        self.yield_list = yield_list
+        self.yield_list = yield_list  # Initialize yield_list
 
     def _worker(self, fn, *args, **kwargs) -> None:
         try:
             res = fn(*args, **kwargs)
             if res is not None:
                 if self.yield_list:
-                    self._yield.append(res)
+                    self._yield_queue.append(res)  # Renamed from _yield
                 else:
-                    self._yield += res
+                    self._yield_queue += res  # Renamed from _yield
         except Exception as e:
             self._exception = e
 
@@ -85,8 +87,8 @@ class ThreadedYielder(Iterable):
             if self._exception:
                 raise self._exception
 
-            while self._yield:
-                yield self._yield.popleft()
+            while self._yield_queue:  # Renamed from _yield
+                yield self._yield_queue.popleft()  # Renamed from _yield
 
             if not self._futures:
                 # No more tasks
@@ -96,3 +98,9 @@ class ThreadedYielder(Iterable):
                 self._futures.popleft()
             else:
                 sleep(0.001)
+
+    def start(self) -> None:
+        """
+        A dummy start method to maintain compatibility
+        """
+        pass

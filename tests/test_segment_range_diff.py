@@ -57,6 +57,20 @@ class TestSegmentRangeDiff(DiffTestCase):
     def test_segment_range_diff_disabled(self):
         """Test that segment range info is not included when flag is disabled"""
         differ = HashDiffer(bisection_factor=4, bisection_threshold=10, segment_range_diff=False)
+
+        # Capture stdout to check if segment range info is printed
+        import io
+        import sys
+
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+
         diff_res = differ.diff_tables(self.table1, self.table2)
         diff = list(diff_res)
+
+        sys.stdout = sys.__stdout__  # Reset stdout
+
         self.assertEqual(len(diff), 2)  # One removal and one addition
+        self.assertFalse(
+            "diff_found_in_segment" in captured_output.getvalue()
+        )  # Verify segment range info is not printed

@@ -287,7 +287,23 @@ class TableDiffer(ThreadBase, ABC):
     def _diff_tables_root(
         self, table1: TableSegment, table2: TableSegment, info_tree: InfoTree
     ) -> Union[DiffResult, DiffResultList]:
-        return self._bisect_and_diff_tables(table1, table2, info_tree)
+        ti = ThreadedYielder(yield_list=self.yield_list)
+        ti.start()
+
+        # Query min/max values
+        key_types1 = [table1._schema[i] for i in table1.key_columns]
+        key_types2 = [table2._schema[i] for i in table2.key_columns]
+        key_ranges = self._threaded_call_as_completed("query_key_range", [table1, table2])
+
+        # Start with the first completed value, so we don't waste time waiting
+        min_key1, max_key1 = self._parse_key_range_result(key_types1, next(key_ranges))
+
+        table1 = table1.new_key_bounds(min_key=min_key1, max_key=max_key1, key_types=key_types1)
+        table2 = table2.new_key_bounds(min_key=min_key1, max_key=max_key1, key_types=key_types2)
+
+        max_rows = max(table1.approximate_size(), table2.approximate_size())
+        diff_res = self._diff_segments(ti, table1, table2, info_tree, max_rows=max_rows, segment_index=0, segment_count=1)  # Pass initial values
+        return ti
 
     @abstractmethod
     def _diff_segments(
@@ -343,12 +359,12 @@ class TableDiffer(ThreadBase, ABC):
         # This is achieved by subtracting the table ranges, and dividing the resulting space into aligned boxes.
         # For example, given tables A & B, and a 2D compound key, where A was queried first for key-range,
         # the regions of B we need to diff in this second pass are marked by B1..8:
-        # ┌──┬──────┬──┐
-        # │B1│  B2  │B3│
-        # ├──┼──────┼──┤
-        # │B4│  A   │B5│
-        # ├──┼──────┼──┤
         # │B6│  B7  │B8│
+        # └──┴──────┴──┘
+        # Overall, the max number of new regions in this 2nd pass is 3^|k| - 1
+
+        # Note: python types can be the same, but the rendering parameters (e.g. casing) can differ.
+        min_key2, max_key2 = self._parse_key_range_result(key_types2, next(key_ranges))
         # └──┴──────┴──┘
         # Overall, the max number of new regions in this 2nd pass is 3^|k| - 1
 
@@ -387,6 +403,8 @@ class TableDiffer(ThreadBase, ABC):
         info_tree: InfoTree,
         level=0,
         max_rows=None,
+        segment_index=None,
+        segment_count=None,
     ):
         assert table1.is_bounded and table2.is_bounded
 
