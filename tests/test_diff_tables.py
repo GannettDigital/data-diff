@@ -757,6 +757,48 @@ class TestInfoTree(DiffTestCase):
             segments.append(child["info"]["rowcounts"])
         self.assertEqual(len(segments), MIN_EXPECTED_BISECTION_FACTOR * 2, msg=f"response: {diff_res}")
 
+    def test_count_first_optimization(self):
+        """
+        Check methiod calls submitted by HashDiffer
+        For every segment with difference in row counts,  we expect a count() call, for the segment with no difference, we expect a count() and count_and_checksum() calls
+        """
+        method_calls_count = dict()
+
+        original_threaded_call = HashDiffer._threaded_call
+        import inspect
+
+        # Patch _threaded_call to  catch any method calls.
+        def patched_threaded_call(self, method, *args, **kwargs):
+            caller_frame = inspect.stack()[1]
+            caller_function = caller_frame.function
+            caller_filename = caller_frame.filename
+            caller_lineno = caller_frame.lineno
+
+            # which caller is invoking the patched method.
+            print(
+                f"Patched _threaded_call() invoked with method='{method}' from {caller_function} "
+                f"in {caller_filename}:{caller_lineno}"
+            )
+            nonlocal method_calls_count
+            method_calls_count[method] = method_calls_count.setdefault(method, 0) + 1
+
+            return original_threaded_call(self, method, *args, **kwargs)
+
+        with unittest.mock.patch.object(HashDiffer, "_threaded_call", new=patched_threaded_call):
+            # Within this block, differ._threaded_call is patched.
+            if os.environ.get("USE_ABF", default=False):
+                differ = HashDiffer(auto_bisection_factor=True, bisection_threshold=100)
+            else:
+                differ = HashDiffer(bisection_threshold=100)
+            diff_res = differ.diff_tables(self.ts1, self.ts2)
+            diff = list(diff_res)
+            segments = []
+            for child in diff_res.info_tree.to_dict()["children"]:
+                segments.append(child["info"]["rowcounts"])
+            self.assertEqual(
+                method_calls_count.get("count"), 32, msg=f"method called: {method_calls_count}, info={segments}"
+            )
+
 
 class TestDuplicateTables(DiffTestCase):
     db_cls = db.MySQL
