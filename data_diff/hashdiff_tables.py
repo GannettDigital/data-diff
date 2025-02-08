@@ -192,11 +192,16 @@ class HashDiffer(TableDiffer):
             if self.bisection_disabled or max_rows < self.bisection_threshold:
                 return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max_rows)
 
-        (count1, checksum1), (count2, checksum2) = self._threaded_call("count_and_checksum", [table1, table2])
+        (count1, checksum1) = (None, None)
+        (count2, checksum2) = (None, None)
+
+        # Count rows in segments first
+        (count1, count2) = self._threaded_call("count", [table1, table2])
 
         assert not info_tree.info.rowcounts
         info_tree.info.rowcounts = {1: count1, 2: count2}
 
+        # Special case for empty segments
         if count1 == 0 and count2 == 0:
             logger.debug(
                 "Uneven distribution of keys detected in segment %s..%s (big gaps in the key column). "
@@ -207,6 +212,21 @@ class HashDiffer(TableDiffer):
             assert checksum1 is None and checksum2 is None
             info_tree.info.is_diff = False
             return
+
+        if count1 != count2:
+            logger.debug(
+                "Optimization: skipping checksums in segment %s..%s as counts do not match",
+                table1.min_key,
+                table1.max_key,
+            )
+            info_tree.info.is_diff = True
+            return self._bisect_and_diff_segments(
+                ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2)
+            )
+
+        # Do a full count and checksums
+        if not os.environ.get("USE_ONLY_COUNT", default=False):
+            (count1, checksum1), (count2, checksum2) = self._threaded_call("count_and_checksum", [table1, table2])
 
         if checksum1 == checksum2:
             info_tree.info.is_diff = False
@@ -235,31 +255,32 @@ class HashDiffer(TableDiffer):
         # If count is below the threshold, just download and compare the columns locally
         # This saves time, as bisection speed is limited by ping and query performance.
         if self.bisection_disabled or max_rows < self.bisection_threshold or max_space_size < self.bisection_factor * 2:
-            rows1, rows2 = self._threaded_call("get_values", [table1, table2])
-            json_cols = {
-                i: colname
-                for i, colname in enumerate(table1.extra_columns)
-                if isinstance(table1._schema[colname], JSON)
-            }
-            diff = list(
-                diff_sets(
-                    rows1,
-                    rows2,
-                    json_cols=json_cols,
-                    columns1=table1.relevant_columns,
-                    columns2=table2.relevant_columns,
-                    key_columns1=table1.key_columns,
-                    key_columns2=table2.key_columns,
-                    ignored_columns1=self.ignored_columns1,
-                    ignored_columns2=self.ignored_columns2,
+            if not os.environ.get("SKIP_DOWNLOAD", default=False):
+                rows1, rows2 = self._threaded_call("get_values", [table1, table2])
+                json_cols = {
+                    i: colname
+                    for i, colname in enumerate(table1.extra_columns)
+                    if isinstance(table1._schema[colname], JSON)
+                }
+                diff = list(
+                    diff_sets(
+                        rows1,
+                        rows2,
+                        json_cols=json_cols,
+                        columns1=table1.relevant_columns,
+                        columns2=table2.relevant_columns,
+                        key_columns1=table1.key_columns,
+                        key_columns2=table2.key_columns,
+                        ignored_columns1=self.ignored_columns1,
+                        ignored_columns2=self.ignored_columns2,
+                    )
                 )
-            )
 
-            info_tree.info.set_diff(diff)
-            info_tree.info.rowcounts = {1: len(rows1), 2: len(rows2)}
+                info_tree.info.set_diff(diff)
+                info_tree.info.rowcounts = {1: len(rows1), 2: len(rows2)}
 
-            logger.info(". " * level + f"Diff found {len(diff)} different rows.")
-            self.stats["rows_downloaded"] = self.stats.get("rows_downloaded", 0) + max(len(rows1), len(rows2))
-            return diff
+                logger.info(". " * level + f"Diff found {len(diff)} different rows.")
+                self.stats["rows_downloaded"] = self.stats.get("rows_downloaded", 0) + max(len(rows1), len(rows2))
+                return diff
 
         return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)
