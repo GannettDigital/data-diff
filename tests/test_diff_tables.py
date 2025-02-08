@@ -796,7 +796,7 @@ class TestInfoTree(DiffTestCase):
             for child in diff_res.info_tree.to_dict()["children"]:
                 segments.append(child["info"]["rowcounts"])
             self.assertEqual(
-                method_calls_count.get("count"), 32, msg=f"method called: {method_calls_count}, info={segments}"
+                method_calls_count.get("count"), 64, msg=f"method called: {method_calls_count}, info={segments}"
             )
 
 
