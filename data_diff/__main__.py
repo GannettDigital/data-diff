@@ -284,6 +284,11 @@ click.Context.formatter_class = MyHelpFormatter
     default=None,
     help="Override the dbt production schema configuration within dbt_project.yml",
 )
+@click.option(
+    "--segment-range-diff",
+    is_flag=True,
+    help="Print segment range information when differences are found",
+)  # Added by Kurt Larsen
 def main(conf, run, **kw) -> None:
     log_handlers = _get_log_handlers(kw["dbt"])
     if kw["table2"] is None and kw["database2"]:
@@ -392,6 +397,7 @@ def _get_table_differ(
     bisection_factor: Optional[int],
     bisection_threshold: Optional[int],
     auto_bisection_factor: Optional[bool],
+    segment_range_diff: bool,  # Added by Kurt Larsen
 ) -> TableDiffer:
     algorithm = Algorithm(algorithm)
     if algorithm == Algorithm.AUTO:
@@ -419,6 +425,7 @@ def _get_table_differ(
         threaded=threaded,
         max_threadpool_size=threads and threads * 2,
         auto_bisection_factor=auto_bisection_factor,
+        segment_range_diff=segment_range_diff,  # Added by Kurt Larsen
     )
 
 
@@ -528,6 +535,7 @@ def _data_diff(
     prod_schema,
     select,
     state,
+    segment_range_diff,  # Added by Kurt Larsen
     threads1=None,
     threads2=None,
     __conf__=None,
@@ -572,6 +580,7 @@ def _data_diff(
             materialize_to_table,
             bisection_factor,
             bisection_threshold,
+            segment_range_diff,  # Added by Kurt Larsen
         )
 
         table_names = table1, table2

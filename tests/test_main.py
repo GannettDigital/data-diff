@@ -1,4 +1,5 @@
 import unittest
+from typing import Optional  # Added by Kurt Larsen
 
 from data_diff import Database, JoinDiffer, HashDiffer
 from data_diff import databases as db
@@ -134,6 +135,10 @@ class TestSetAge(unittest.TestCase):
 
 
 class TestGetTableDiffer(unittest.TestCase):
+    def _get_differ(self, algorithm: str, db1: Database, db2: Database) -> TableDiffer:
+        # Modified by Kurt Larsen - Simplified parameter passing
+        return _get_table_differ(algorithm, db1, db2, False, 1, False, False, False, 1, None, None, None, False, False)
+
     def test__get_table_differ(self):
         db1: Database
         db2: Database
@@ -164,10 +169,6 @@ class TestGetTableDiffer(unittest.TestCase):
 
             table_differ: TableDiffer = self._get_differ("hashdiff", db1, db2)
             assert isinstance(table_differ, HashDiffer)
-
-    @staticmethod
-    def _get_differ(algorithm, db1, db2):
-        return _get_table_differ(algorithm, db1, db2, False, 1, False, False, False, 1, None, None, None, False)
 
 
 class TestGetExpandedColumns(DiffTestCase):

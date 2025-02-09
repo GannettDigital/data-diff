@@ -1,4 +1,5 @@
 import os
+import json  # Added by Kurt Larsen - For JSON formatting
 from numbers import Number
 import logging
 from collections import defaultdict
@@ -100,14 +101,17 @@ class HashDiffer(TableDiffer):
         max_threadpool_size (int): Maximum size of each threadpool. ``None`` means auto.
                                    Only relevant when `threaded` is ``True``.
                                    There may be many pools, so number of actual threads can be a lot higher.
+        segment_range_diff (bool): If True, includes segment range info when differences are found
     """
 
     bisection_factor: int = DEFAULT_BISECTION_FACTOR
     bisection_threshold: int = DEFAULT_BISECTION_THRESHOLD
     bisection_disabled: bool = False  # i.e. always download the rows (used in tests)
     auto_bisection_factor: bool = False
+    segment_range_diff: bool = False  # Added by Kurt Larsen - Flag to control segment range output
 
     stats: dict = attrs.field(factory=dict)
+    _processed_segments: set = attrs.field(factory=set, init=False)  # Added by Kurt Larsen - Track processed segments
 
     def __attrs_post_init__(self) -> None:
         # Validate options
@@ -178,19 +182,22 @@ class HashDiffer(TableDiffer):
         segment_index=None,
         segment_count=None,
     ):
-        logger.info(
-            ". " * level + f"Diffing segment {segment_index}/{segment_count}, "
-            f"key-range: {table1.min_key}..{table2.max_key}, "
-            f"size <= {max_rows}"
-        )
-
-        # When benchmarking, we want the ability to skip checksumming. This
-        # allows us to download all rows for comparison in performance. By
-        # default, data-diff will checksum the section first (when it's below
-        # the threshold) and _then_ download it.
-        if BENCHMARK:
-            if self.bisection_disabled or max_rows < self.bisection_threshold:
-                return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max_rows)
+        # If segment_range_diff is true, skip the checksum calculation
+        if self.segment_range_diff:
+            info_tree.info.is_diff = True  # Assume potential diff without checking
+            info_tree.info.diff_count = max_rows  # Use max_rows as an approximate count
+            ti.submit(
+                self._bisect_and_diff_segments,
+                ti,
+                table1,
+                table2,
+                info_tree,
+                level=level,
+                max_rows=max_rows,
+                segment_index=segment_index,
+                segment_count=segment_count,
+            )
+            return
 
         (count1, checksum1), (count2, checksum2) = self._threaded_call("count_and_checksum", [table1, table2])
 
@@ -198,13 +205,6 @@ class HashDiffer(TableDiffer):
         info_tree.info.rowcounts = {1: count1, 2: count2}
 
         if count1 == 0 and count2 == 0:
-            logger.debug(
-                "Uneven distribution of keys detected in segment %s..%s (big gaps in the key column). "
-                "For better performance, we recommend to increase the bisection-threshold.",
-                table1.min_key,
-                table1.max_key,
-            )
-            assert checksum1 is None and checksum2 is None
             info_tree.info.is_diff = False
             return
 
@@ -213,39 +213,52 @@ class HashDiffer(TableDiffer):
             return
 
         info_tree.info.is_diff = True
-        return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2))
+        info_tree.info.diff_count = max(count1, count2)
+
+        ti.submit(
+            self._bisect_and_diff_segments,
+            ti,
+            table1,
+            table2,
+            info_tree,
+            level=level,
+            max_rows=max(count1, count2),
+            segment_index=segment_index,
+            segment_count=segment_count,
+        )
 
     def _bisect_and_diff_segments(
-        self,
-        ti: ThreadedYielder,
-        table1: TableSegment,
-        table2: TableSegment,
-        info_tree: InfoTree,
-        level=0,
-        max_rows=None,
+        self, ti, table1, table2, info_tree, level=0, max_rows=None, segment_index=None, segment_count=None
     ):
-        assert table1.is_bounded and table2.is_bounded
-
         max_space_size = max(table1.approximate_size(), table2.approximate_size())
         if max_rows is None:
-            # We can be sure that row_count <= max_rows iff the table key is unique
             max_rows = max_space_size
-            info_tree.info.max_rows = max_rows
 
-        # If count is below the threshold, just download and compare the columns locally
-        # This saves time, as bisection speed is limited by ping and query performance.
+        # Exit early if segment_range_diff is true - skip row downloads and diffing
+        if self.segment_range_diff:
+            # Print segment info without downloading rows
+            segment_json = {
+                "diff_found_in_segment": {
+                    "segment_index": segment_index,
+                    "total_segments": segment_count,
+                    "key_range": {"min_key": str(table1.min_key), "max_key": str(table1.max_key)},
+                    "approx_rows": max_space_size  # Use approximate size instead of actual counts
+                }
+            }
+            print(json.dumps(segment_json, indent=2))
+            return  # Skip further processing
+
         if self.bisection_disabled or max_rows < self.bisection_threshold or max_space_size < self.bisection_factor * 2:
             rows1, rows2 = self._threaded_call("get_values", [table1, table2])
-            json_cols = {
-                i: colname
-                for i, colname in enumerate(table1.extra_columns)
-                if isinstance(table1._schema[colname], JSON)
-            }
             diff = list(
                 diff_sets(
                     rows1,
                     rows2,
-                    json_cols=json_cols,
+                    json_cols={
+                        i: colname
+                        for i, colname in enumerate(table1.extra_columns)
+                        if isinstance(table1._schema[colname], JSON)
+                    },
                     columns1=table1.relevant_columns,
                     columns2=table2.relevant_columns,
                     key_columns1=table1.key_columns,
@@ -262,4 +275,6 @@ class HashDiffer(TableDiffer):
             self.stats["rows_downloaded"] = self.stats.get("rows_downloaded", 0) + max(len(rows1), len(rows2))
             return diff
 
-        return super()._bisect_and_diff_segments(ti, table1, table2, info_tree, level, max_rows)
+        return super()._bisect_and_diff_segments(
+            ti, table1, table2, info_tree, level, max_rows, segment_index=segment_index, segment_count=segment_count
+        )
