@@ -182,6 +182,23 @@ class HashDiffer(TableDiffer):
         segment_index=None,
         segment_count=None,
     ):
+        # If segment_range_diff is true, skip the checksum calculation
+        if self.segment_range_diff:
+            info_tree.info.is_diff = True  # Assume potential diff without checking
+            info_tree.info.diff_count = max_rows  # Use max_rows as an approximate count
+            ti.submit(
+                self._bisect_and_diff_segments,
+                ti,
+                table1,
+                table2,
+                info_tree,
+                level=level,
+                max_rows=max_rows,
+                segment_index=segment_index,
+                segment_count=segment_count,
+            )
+            return
+
         (count1, checksum1), (count2, checksum2) = self._threaded_call("count_and_checksum", [table1, table2])
 
         assert not info_tree.info.rowcounts
@@ -198,22 +215,6 @@ class HashDiffer(TableDiffer):
         info_tree.info.is_diff = True
         info_tree.info.diff_count = max(count1, count2)
 
-        if self.segment_range_diff and info_tree.info.is_diff:
-            segment_json = {
-                "diff_found_in_segment": {
-                    "segment_index": segment_index,
-                    "total_segments": segment_count,
-                    "key_range": {"min_key": str(table1.min_key), "max_key": str(table1.max_key)},
-                    "row_counts": info_tree.info.rowcounts,
-                    "diff_count": info_tree.info.diff_count,
-                }
-            }
-            print(json.dumps(segment_json, indent=2))
-            # Previously: returned [] here to stop recursion.
-            # Now: proceed to calculate actual differences.
-            return
-
-        # Submit the bisect and diff segments task to the ThreadedYielder
         ti.submit(
             self._bisect_and_diff_segments,
             ti,
@@ -233,10 +234,19 @@ class HashDiffer(TableDiffer):
         if max_rows is None:
             max_rows = max_space_size
 
-        # NEW: If segment_range_diff flag is True, skip downloading rows and diffing.
+        # Exit early if segment_range_diff is true - skip row downloads and diffing
         if self.segment_range_diff:
-            logger.info(". " * level + "Skipping row download and diff due to segment_range_diff flag.")
-            return
+            # Print segment info without downloading rows
+            segment_json = {
+                "diff_found_in_segment": {
+                    "segment_index": segment_index,
+                    "total_segments": segment_count,
+                    "key_range": {"min_key": str(table1.min_key), "max_key": str(table1.max_key)},
+                    "approx_rows": max_space_size  # Use approximate size instead of actual counts
+                }
+            }
+            print(json.dumps(segment_json, indent=2))
+            return  # Skip further processing
 
         if self.bisection_disabled or max_rows < self.bisection_threshold or max_space_size < self.bisection_factor * 2:
             rows1, rows2 = self._threaded_call("get_values", [table1, table2])
