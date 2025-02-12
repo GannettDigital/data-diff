@@ -100,7 +100,7 @@ class Dialect(BaseDialect):
         return "SET @@session.time_zone='+00:00'"
 
     def md5_as_int(self, s: str) -> str:
-        return f"conv(substring(md5({s}), {1+MD5_HEXDIGITS-CHECKSUM_HEXDIGITS}), 16, 10) - {CHECKSUM_OFFSET}"
+        return f"conv(substring(sha1({s}), {1+MD5_HEXDIGITS-CHECKSUM_HEXDIGITS+8}), 16, 10) - {CHECKSUM_OFFSET}"
 
     def md5_as_hex(self, s: str) -> str:
         return f"md5({s})"
