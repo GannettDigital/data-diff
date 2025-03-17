@@ -23,14 +23,14 @@ jobs:
 
       - name: Get changed files
         id: changed-files
-        uses: tj-actions/changed-files@v45
+        uses: tj-actions/changed-files@v46.0.1
         with:
           files: |
             **/*.py
 
       # This is used for forked PRs as write permissions are required to format files
       - name: Run and commit changes with `ruff format .` locally on your forked branch to fix errors if they appear
-        if: ${{ github.event.pull_request.head.repo.fork == true }}
+        if: ${{ github.event.pull_request.head.repo.fork == true and steps.changed-files.outputs.all_changed_files != '' }}
         uses: chartboost/ruff-action@v1
         id: ruff_formatter_suggestions
         with:
