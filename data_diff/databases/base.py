@@ -653,7 +653,7 @@ class BaseDialect(abc.ABC):
         if offset:
             raise NotImplementedError("No support for OFFSET in query")
 
-        return f"SELECT * FROM ({select_query}) AS LIMITED_SELECT LIMIT {limit}"
+        return f"SELECT * FROM ({select_query} LIMIT {limit}) AS LIMITED_SELECT"
 
     def concat(self, items: List[str]) -> str:
         "Provide SQL for concatenating a bunch of columns into a string"
