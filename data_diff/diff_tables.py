@@ -391,10 +391,10 @@ class TableDiffer(ThreadBase, ABC):
         assert table1.is_bounded and table2.is_bounded
 
         # Choose evenly spaced checkpoints (according to min_key and max_key)
-        biggest_table = max(table1, table2, key=methodcaller("approximate_size"))
+        biggest_table = max(table1, table2, key=methodcaller("count"))
         logger.info(f"Diff segments level: {level}")
         if self.auto_bisection_factor:
-            self.bisection_factor = self.calculate_bisection_factor(biggest_table.approximate_size())
+            self.bisection_factor = self.calculate_bisection_factor(biggest_table.count())
             logger.info(
                 f"Automatically setting bisection_factor, max_rows: {max_rows}, self.bisection_factor: {self.bisection_factor}"
             )
