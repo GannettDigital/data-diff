@@ -220,9 +220,12 @@ class Dialect(BaseDialect):
         # match on both sides: i.e. have properly ordered keys, same spacing, same quotes, etc.
         return f"to_json_string({value})"
 
-    def normalize_decimal(self, value: str, coltype: Decimal) -> str:
+    #def normalize_decimal(self, value: str, coltype: Decimal) -> str:
         # Format DECIMAL/NUMERIC values as strings with 2 decimal places for consistent comparison
-        return f"FORMAT('%.2f', {value})"
+    #    return f"FORMAT('%.2f', {value})"
+
+    def normalize_decimal(self, value: str, coltype: Decimal) -> str:
+        return f"FORMAT('%.{coltype.precision}f', {value})"
 
 
 @attrs.define(frozen=False, init=False, kw_only=True)
