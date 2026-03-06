@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
     postgres:
       container_name: dd-postgresql
@@ -99,31 +97,10 @@ services:
         networks:
             - local
 
-    vertica:
-      container_name: dd-vertica
-      image: vertica/vertica-ce:12.0.0-0
-      restart: always
-      volumes:
-          - vertica-data:/data:delegated
-      ports:
-        - '5433:5433'
-        - '5444:5444'
-      expose:
-        - '5433'
-        - '5444'
-      env_file:
-        - dev/dev.env
-      tty: true
-      networks:
-      - local
-
-
-
 volumes:
   postgresql-data:
   mysql-data:
   clickhouse-data:
-  vertica-data:
 
 networks:
   local:
