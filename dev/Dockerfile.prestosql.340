@@ -1,4 +1,4 @@
-FROM openjdk:11-jdk-slim-buster
+FROM eclipse-temurin:11-jdk-jammy
 
 ENV PRESTO_VERSION=340
 ENV PRESTO_SERVER_URL=https://repo1.maven.org/maven2/io/prestosql/presto-server/${PRESTO_VERSION}/presto-server-${PRESTO_VERSION}.tar.gz
@@ -10,7 +10,7 @@ WORKDIR $PRESTO_HOME
 
 RUN set -xe \
     && apt-get update \
-    && apt-get install -y curl less python \
+    && apt-get install -y curl less python-is-python3 \
     && curl -sSL $PRESTO_SERVER_URL | tar xz --strip 1 \
     && curl -sSL $PRESTO_CLI_URL > ./bin/presto \
     && chmod +x ./bin/presto \
