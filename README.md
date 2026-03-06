@@ -176,6 +176,9 @@ Check out [documentation](https://web.archive.org/web/20240525044139/https://doc
 * 🟢: Implemented and thoroughly tested.
 * 🟡: Implemented, but not thoroughly tested yet.
 
+Vertica support remains available in code, but the default CI and local Docker stack do not currently provision a
+working Vertica instance. To test Vertica, supply your own connection via `DATADIFF_VERTICA_URI`.
+
 Your database not listed here?
 
 - Contribute a [new database adapter](docs/new-database-driver-guide.rst) – we accept pull requests!

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -n "$DATADIFF_VERTICA_URI" ]
+if [ -n "${DATADIFF_VERTICA_URI:-}" ]
     then
         echo "Check Vertica DB running..."
         while true

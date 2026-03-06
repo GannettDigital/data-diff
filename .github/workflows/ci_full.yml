@@ -31,7 +31,7 @@ jobs:
         run:  chmod +x tests/install-packages.sh && ./tests/install-packages.sh
 
       - name: Build the stack
-        run: docker-compose up -d mysql postgres presto trino clickhouse vertica
+        run: docker-compose up -d mysql postgres presto trino clickhouse
 
       - name: Install Poetry
         run: pip install poetry
@@ -58,7 +58,6 @@ jobs:
             DATADIFF_SNOWFLAKE_URI: '${{ secrets.DATADIFF_SNOWFLAKE_URI }}'
             DATADIFF_PRESTO_URI: '${{ secrets.DATADIFF_PRESTO_URI }}'
             DATADIFF_CLICKHOUSE_URI: 'clickhouse://clickhouse:Password1@localhost:9000/clickhouse'
-            DATADIFF_VERTICA_URI: 'vertica://vertica:Password1@localhost:5433/vertica'
             # DATADIFF_BIGQUERY_URI: '${{ secrets.DATADIFF_BIGQUERY_URI }}'
             DATADIFF_REDSHIFT_URI: '${{ secrets.DATADIFF_REDSHIFT_URI }}'
             MOTHERDUCK_TOKEN: '${{ secrets.MOTHERDUCK_TOKEN }}'

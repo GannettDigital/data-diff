@@ -38,5 +38,5 @@ class TestDuckDBTableSchemaMethods(unittest.TestCase):
         self.assertEqual(self.duckdb_conn.select_table_schema(db_path), expected_sql)
 
         db_path = ("custom_db", "custom_schema", "test_table")
-        expected_sql = "SELECT column_name, data_type, datetime_precision, numeric_precision, numeric_scale FROM custom_db.information_schema.columns WHERE table_name = 'test_table' AND table_schema = 'custom_schema' and table_catalog = 'custom_db'"
+        expected_sql = "SELECT column_name, data_type, datetime_precision, numeric_precision, numeric_scale FROM information_schema.columns WHERE table_name = 'test_table' AND table_schema = 'custom_schema' and table_catalog = 'custom_db'"
         self.assertEqual(self.duckdb_conn.select_table_schema(db_path), expected_sql)

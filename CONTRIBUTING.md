@@ -63,6 +63,8 @@ You can create a local MySQL instance using `docker-compose up mysql`. The URI f
 You can also run a few servers at once. For example `docker-compose up mysql postgres presto`.
 
 Make sure to update the appropriate `TEST_*_CONN_STRING`, so that it will be included in the tests.
+Vertica is no longer part of the default local Docker stack. If you need to exercise it, provide your own Vertica
+instance and set `DATADIFF_VERTICA_URI` or override `TEST_VERTICA_CONN_STRING` in `tests/local_settings.py`.
 
 #### Run the tests
 
