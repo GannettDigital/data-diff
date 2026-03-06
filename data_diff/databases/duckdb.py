@@ -72,6 +72,11 @@ class Dialect(BaseDialect):
     def quote(self, s: str):
         return f'"{s}"'
 
+    def type_repr(self, t) -> str:
+        if isinstance(t, TimestampTZ):
+            return "TIMESTAMP WITH TIME ZONE"
+        return super().type_repr(t)
+
     def to_string(self, s: str):
         return f"{s}::VARCHAR"
 
@@ -165,17 +170,11 @@ class DuckDB(Database):
 
     def select_table_schema(self, path: DbPath) -> str:
         database, schema, table = self._normalize_table_path(path)
-
-        info_schema_path = ["information_schema", "columns"]
-
-        if database:
-            info_schema_path.insert(0, database)
-            dynamic_database_clause = f"'{database}'"
-        else:
-            dynamic_database_clause = "current_catalog()"
+        dynamic_database_clause = f"'{database}'" if database else "current_catalog()"
 
         return (
-            f"SELECT column_name, data_type, datetime_precision, numeric_precision, numeric_scale FROM {'.'.join(info_schema_path)} "
+            "SELECT column_name, data_type, datetime_precision, numeric_precision, numeric_scale "
+            "FROM information_schema.columns "
             f"WHERE table_name = '{table}' AND table_schema = '{schema}' and table_catalog = {dynamic_database_clause}"
         )
 
