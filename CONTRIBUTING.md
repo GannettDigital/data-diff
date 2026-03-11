@@ -82,7 +82,7 @@ New databases should be added as a new module in the `data-diff/databases/` fold
 
 If possible, please also add the database setup to `docker-compose.yml`, so that we can run and test it for ourselves. If you do, also update the CI (`ci.yml`).
 
-Guide to implementing a new database driver: [docs/new-database-driver-guide.rst](docs/new-database-driver-guide.rst)
+[Guide to implementing a new database driver](docs/new-database-driver-guide.rst)
 
 ## Development Setup
 
