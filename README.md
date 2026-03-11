@@ -57,7 +57,7 @@ Looking to use data-diff in dbt development?
 
 Development testing with Datafold enables you to see the impact of dbt code changes on data as you write the code, whether in your IDE or CLI.
 
- Head over to [our `data-diff` + `dbt` documentation](https://web.archive.org/web/20240621071607/https://docs.datafold.com/development_testing/cli/) to get started with a development testing workflow!
+ Head over to [our `data-diff` + `dbt` documentation](https://docs.datafold.com/development_testing/cli/) to get started with a development testing workflow!
 
 ### 🔀 Compare data tables between databases
 1. Install `data-diff` with adapters
@@ -150,7 +150,7 @@ data-diff --conf datadiff.toml \
 
 After running your data-diff job, review the output to identify and analyze differences in your data.
 
-Check out [documentation](https://web.archive.org/web/20240525044139/https://docs.datafold.com/reference/open_source/cli/) for the full command reference.
+Check out [documentation](https://docs.datafold.com/reference/open_source/cli/) for the full command reference.
 
 # Supported databases
 
@@ -216,7 +216,7 @@ Your database not listed here?
 </details>
 <br>
 
-For detailed algorithm and performance insights, explore [here](docs/technical-explanation.md), or head to our docs to [learn more about how Datafold diffs data](https://web.archive.org/web/20240804072404/https://docs.datafold.com/data_diff/how-datafold-diffs-data/).
+For detailed algorithm and performance insights, explore [here](docs/technical-explanation.md), or head to our docs to [learn more about how Datafold diffs data](https://docs.datafold.com/data_diff/how-datafold-diffs-data/).
 
 ## Contributors
 
