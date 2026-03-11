@@ -1,81 +1,73 @@
 <p align="center">
-    <a href="https://datafold.com/"><img alt="Datafold" src="https://user-images.githubusercontent.com/1799931/196497110-d3de1113-a97f-4322-b531-026d859b867a.png" width="30%" /></a>
+  <img alt="data-diff logo" src="docs/data-diff-logo.png" width="280" />
 </p>
 
-<h2 align="center">
-data-diff: Compare datasets fast, within or across SQL databases
+<h1 align="center">data-diff</h1>
 
-![data-diff-logo](docs/data-diff-logo.png)
-</h2>
-<br>
+<p align="center">Compare datasets fast, within or across SQL databases.</p>
 
-> [Join our live virtual lab series to learn how to set it up!](https://www.datafold.com/virtual-hands-on-lab)
+`data-diff` was originally developed by Datafold. This repository is an improved fork maintained by the Gannett / USA TODAY LOCALiQ Data Engineering team.
 
 # What's a Data Diff?
-A data diff is the value-level comparison between two tables—used to identify critical changes to your data and guarantee data quality.
 
-There is a lot you can do with data-diff: you can test SQL code by comparing development or staging environment data to production, or compare source and target data to identify discrepancies when moving data between databases.
+A data diff is a value-level comparison between two tables. It helps identify critical data changes, validate transformations, and verify that data moved between systems still matches expectations.
 
-# data-diff OSS & Datafold Cloud
-data-diff is an open source utility for running stateless diffs as a great single player experience.
-
-
-
-Scale up with [Datafold Cloud](https://www.datafold.com/) to make data diffing a company-wide experience to both supercharge your data diffing CLI experience (ex: data-diff --dbt --cloud) and run diffs manually in your CI process and within the Datafold UI. This includes [column-level lineage](https://www.datafold.com/column-level-lineage) with BI tool integrations, [CI testing](https://docs.datafold.com/deployment_testing/how_it_works/), faster cross-database diffing, and diff history.
+You can use `data-diff` to compare development or staging data to production, validate migrations, or investigate discrepancies between systems without pulling entire tables into application memory.
 
 # Use Cases
 
 ### Data Development Testing
-When developing SQL code, data-diff helps you validate and preview changes by comparing data between development/staging environments and production. Here's how it works:
-1. Make a change to your SQL code
-2. Run the SQL code to create a new dataset
-3. Compare this dataset with its production version or other iterations
+
+When developing SQL code, `data-diff` helps validate and preview changes by comparing data between development or staging environments and production.
+
+1. Make a change to your SQL code.
+2. Run the SQL code to create a new dataset.
+3. Compare that dataset with its production version or another revision.
 
 ### Data Migration & Replication Testing
-data-diff is a powerful tool for comparing data when you're moving it between systems. Use it to ensure data accuracy and identify discrepancies during tasks like:
-- **Migrating** to a new data warehouse (e.g., Oracle -> Snowflake)
-- **Validating SQL transformations** from legacy solutions (e.g., stored procedures) to new transformation frameworks (e.g., dbt)
-- Continuously **replicating data** from an OLTP database to OLAP data warehouse (e.g., MySQL -> Redshift)
+
+`data-diff` is useful when moving data between systems. Typical examples include:
+
+- Migrating to a new data warehouse, such as Oracle to Snowflake.
+- Validating SQL transformations when replacing stored procedures with dbt.
+- Continuously replicating data from OLTP systems to OLAP warehouses, such as MySQL to Redshift.
 
 # dbt Integration
-  <p align="left">
-  <img alt="dbt" src="https://seeklogo.com/images/D/dbt-logo-E4B0ED72A2-seeklogo.com.png" width="10%" />
-  </p>
 
-data-diff integrates with [dbt Core](https://github.com/dbt-labs/dbt-core) to seamlessly compare local development to production datasets.
+`data-diff` integrates with [dbt Core](https://github.com/dbt-labs/dbt-core) to compare local development datasets to production datasets.
 
-Learn more about how data-diff works with dbt:
-* Read our docs to get started with [data-diff & dbt](https://docs.datafold.com/development_testing/cli) or :eyes: **watch the [4-min demo video](https://www.loom.com/share/ad3df969ba6b4298939efb2fbcc14cde)**
-* dbt Cloud users should check out [Datafold's out-of-the-box deployment testing integration](https://www.datafold.com/data-deployment-testing)
-* Get support from the dbt Community Slack in [#tools-datafold](https://getdbt.slack.com/archives/C03D25A92UU)
+Useful references:
 
+- [Archived dbt workflow guide](https://web.archive.org/web/20240621071607/https://docs.datafold.com/development_testing/cli/)
+- [GitHub discussions](https://github.com/GannettDigital/data-diff/discussions)
 
 # Getting Started
 
-### ⚡ Validating dbt model changes between dev and prod
-Looking to use data-diff in dbt development?
+### Validating dbt model changes between dev and prod
 
-Development testing with Datafold enables you to see the impact of dbt code changes on data as you write the code, whether in your IDE or CLI.
+If you are using `data-diff` with dbt, start with the archived dbt workflow guide:
 
- Head over to [our `data-diff` + `dbt` documentation](https://web.archive.org/web/20240621071607/https://docs.datafold.com/development_testing/cli/) to get started with a development testing workflow!
+- [data-diff + dbt documentation](https://web.archive.org/web/20240621071607/https://docs.datafold.com/development_testing/cli/)
 
-### 🔀 Compare data tables between databases
-1. Install `data-diff` with adapters
+### Compare data tables between databases
 
-To compare data between databases, install `data-diff` with specific database adapters. For example, install it for PostgreSQL and Snowflake like this:
+1. Install `data-diff` with adapters.
 
-```
+To compare data between databases, install `data-diff` with the database adapters you need. For example, for PostgreSQL and Snowflake:
+
+```bash
 pip install data-diff 'data-diff[postgresql,snowflake]' -U
 ```
 
-Additionally, you can install all open source supported database adapters as follows.
-```
+To install all open source supported adapters:
+
+```bash
 pip install data-diff 'data-diff[all-dbs]' -U
 ```
 
-2. Run `data-diff` with connection URIs
+2. Run `data-diff` with connection URIs.
 
-Then, we compare tables between PostgreSQL and Snowflake using the hashdiff algorithm:
+The example below compares PostgreSQL and Snowflake using the hashdiff algorithm:
 
 ```bash
 data-diff \
@@ -83,29 +75,29 @@ data-diff \
   <table> \
   "snowflake://<username>:<password>@<account>/<DATABASE>/<SCHEMA>?warehouse=<WAREHOUSE>&role=<ROLE>" \
   <TABLE> \
-  -k <primary key column> \
-  -c <columns to compare> \
-  -w <filter condition>
+  -k <primary_key_column> \
+  -c <columns_to_compare> \
+  -w <filter_condition>
 ```
-3. Set up your configuration
 
-You can use a `toml` configuration file to run your `data-diff` job. In this example, we compare tables between MotherDuck (hosted DuckDB) and Snowflake using the hashdiff algorithm:
+3. Set up a configuration file.
+
+You can also define databases and runs in a `toml` config file. This example compares MotherDuck and Snowflake using hashdiff:
 
 ```toml
 ## DATABASE CONNECTION ##
 [database.duckdb_connection]
   driver = "duckdb"
-  # filepath = "datafold_demo.duckdb" # local duckdb file example
+  # filepath = "demo.duckdb" # local duckdb file example
   # filepath = "md:" # default motherduck connection example
-  filepath = "md:datafold_demo?motherduck_token=${motherduck_token}" # API token recommended for motherduck connection
+  filepath = "md:demo?motherduck_token=${MOTHERDUCK_TOKEN}" # token recommended for MotherDuck
 
 [database.snowflake_connection]
   driver = "snowflake"
   database = "DEV"
-  user = "sung"
-  password = "${SNOWFLAKE_PASSWORD}" # or "<PASSWORD_STRING>"
-  # the info below is only required for snowflake
-  account = "${ACCOUNT}" # by33919
+  user = "${SNOWFLAKE_USER}"
+  password = "${SNOWFLAKE_PASSWORD}"
+  account = "${SNOWFLAKE_ACCOUNT}"
   schema = "DEVELOPMENT"
   warehouse = "DEMO"
   role = "DEMO_ROLE"
@@ -116,26 +108,22 @@ You can use a `toml` configuration file to run your `data-diff` job. In this exa
 
 ## EXAMPLE DATA DIFF JOB ##
 [run.demo_xdb_diff]
-  # Source 1 ("left")
   1.database = "duckdb_connection"
   1.table = "development.raw_orders"
 
-  # Source 2 ("right")
   2.database = "snowflake_connection"
-  2.table = "RAW_ORDERS" # note that snowflake table names are case-sensitive
+  2.table = "RAW_ORDERS"
 
   verbose = false
 ```
-4. Run your `data-diff` job
 
-Make sure to export relevant environment variables as needed. For example, we compare data based on the earlier configuration:
+4. Run the configured job.
+
+Export any required environment variables and then run the configured diff:
 
 ```bash
+export MOTHERDUCK_TOKEN=<MOTHERDUCK_TOKEN>
 
-# export relevant environment variables, example below
-export motherduck_token=<MOTHERDUCK_TOKEN>
-
-# run the configured data-diff job
 data-diff --conf datadiff.toml \
   --run demo_xdb_diff \
   -k "id" \
@@ -146,95 +134,93 @@ data-diff --conf datadiff.toml \
 + 1, returned
 ```
 
-5. Review the output
+5. Review the output.
 
-After running your data-diff job, review the output to identify and analyze differences in your data.
+Review the diff output to identify and analyze data changes.
 
-Check out [documentation](https://web.archive.org/web/20240525044139/https://docs.datafold.com/reference/open_source/cli/) for the full command reference.
+Additional references:
 
-# Supported databases
+- [Archived CLI reference](https://web.archive.org/web/20240525044139/https://docs.datafold.com/reference/open_source/cli/)
+- [Technical explanation](docs/technical-explanation.md)
+- [Python API reference](docs/python-api.rst)
+- [Python examples](docs/python_examples.rst)
 
-| Database      | Status | Connection string                                                                                                                   |
-|---------------|-------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| PostgreSQL >=10 |  🟢   | `postgresql://<user>:<password>@<host>:5432/<database>`                                                                             |
-| MySQL         |  🟢     | `mysql://<user>:<password>@<hostname>:5432/<database>`                                                                              |
-| Snowflake     |  🟢     | `"snowflake://<user>[:<password>]@<account>/<database>/<SCHEMA>?warehouse=<WAREHOUSE>&role=<role>[&authenticator=externalbrowser]"` |
-| BigQuery      |  🟢     | `bigquery://<project>/<dataset>`                                                                                                    |
-| Redshift      |  🟢     | `redshift://<username>:<password>@<hostname>:5439/<database>`                                                                       |
-| DuckDB        |  🟢   | `duckdb://<filepath>`                                                                                          |
-| MotherDuck        |  🟢   | `duckdb://<filepath>`                                                                                                   |
-| Microsoft SQL Server*        |  🟢   | `mssql://<user>:<password>@<host>/<database>/<schema>`                                                                                                   |
-| Oracle        |  🟡   | `oracle://<username>:<password>@<hostname>/servive_or_sid`                                                                          |
-| Presto        |  🟡   | `presto://<username>:<password>@<hostname>:8080/<database>`                                                                         |
-| Databricks    |  🟡   | `databricks://<http_path>:<access_token>@<server_hostname>/<catalog>/<schema>`                                                      |
-| Trino         |  🟡   | `trino://<username>:<password>@<hostname>:8080/<database>`                                                                          |
-| Clickhouse    |  🟡   | `clickhouse://<username>:<password>@<hostname>:9000/<database>`                                                                     |
-| Vertica       |  🟡   | `vertica://<username>:<password>@<hostname>:5433/<database>`                                                                        |
+# Supported Databases
 
-*MS SQL Server support is limited, with known performance issues that are addressed in Datafold Cloud.
+| Database | Status | Connection string |
+| --- | --- | --- |
+| PostgreSQL >=10 | 🟢 | `postgresql://<user>:<password>@<host>:5432/<database>` |
+| MySQL | 🟢 | `mysql://<user>:<password>@<hostname>:5432/<database>` |
+| Snowflake | 🟢 | `"snowflake://<user>[:<password>]@<account>/<database>/<SCHEMA>?warehouse=<WAREHOUSE>&role=<role>[&authenticator=externalbrowser]"` |
+| BigQuery | 🟢 | `bigquery://<project>/<dataset>` |
+| Redshift | 🟢 | `redshift://<username>:<password>@<hostname>:5439/<database>` |
+| DuckDB | 🟢 | `duckdb://<filepath>` |
+| MotherDuck | 🟢 | `duckdb://<filepath>` |
+| Microsoft SQL Server* | 🟢 | `mssql://<user>:<password>@<host>/<database>/<schema>` |
+| Oracle | 🟡 | `oracle://<username>:<password>@<hostname>/<service_or_sid>` |
+| Presto | 🟡 | `presto://<username>:<password>@<hostname>:8080/<database>` |
+| Databricks | 🟡 | `databricks://<http_path>:<access_token>@<server_hostname>/<catalog>/<schema>` |
+| Trino | 🟡 | `trino://<username>:<password>@<hostname>:8080/<database>` |
+| Clickhouse | 🟡 | `clickhouse://<username>:<password>@<hostname>:9000/<database>` |
+| Vertica | 🟡 | `vertica://<username>:<password>@<hostname>:5433/<database>` |
+
+*Microsoft SQL Server support is limited and has known performance issues.
 
 * 🟢: Implemented and thoroughly tested.
 * 🟡: Implemented, but not thoroughly tested yet.
 
-Vertica support remains available in code, but the default CI and local Docker stack do not currently provision a
-working Vertica instance. To test Vertica, supply your own connection via `DATADIFF_VERTICA_URI`.
+Vertica support remains available in code, but the default CI and local Docker stack do not currently provision a working Vertica instance. To test Vertica, supply your own connection via `DATADIFF_VERTICA_URI`.
 
 Your database not listed here?
 
-- Contribute a [new database adapter](docs/new-database-driver-guide.rst) – we accept pull requests!
-- [Get in touch](https://www.datafold.com/demo) about enterprise support and adding new adapters and features
+- Contribute a [new database adapter](docs/new-database-driver-guide.rst).
+- Open an [issue](https://github.com/GannettDigital/data-diff/issues) to discuss support.
 
-
-<br>
-
-# How it works
+# How It Works
 
 `data-diff` efficiently compares data using two modes:
 
-**joindiff**: Ideal for comparing data within the same database, utilizing outer joins for efficient row comparisons. It relies on the database engine for computation and has consistent performance.
+**joindiff**: Ideal for comparing data within the same database, using outer joins for efficient row comparison. It relies on the database engine for computation and has consistent performance.
 
-**hashdiff**: Recommended for comparing datasets across different databases or large tables with minimal differences. It uses hashing and binary search, capable of diffing data across distinct database engines.
+**hashdiff**: Recommended for comparing datasets across different databases or large tables with minimal differences. It uses hashing and binary search and can diff data across distinct database engines.
 
 <details>
 <summary>Click here to learn more about joindiff and hashdiff</summary>
 
 ### `joindiff`
-* Recommended for comparing data within the same database
-* Uses the outer join operation to diff the rows as efficiently as possible within the same database
-* Fully relies on the underlying database engine for computation
-* Requires both datasets to be queryable with a single SQL query
-* Time complexity approximates JOIN operation and is largely independent of the number of differences in the dataset
 
-### `hashdiff`:
-* Recommended for comparing datasets across different databases
-* Can also be helpful in diffing very large tables with few expected differences within the same database
-* Employs a divide-and-conquer algorithm based on hashing and binary search
-* Can diff data across distinct database engines, e.g., PostgreSQL <> Snowflake
-* Time complexity approximates COUNT(*) operation when there are few differences
-* Performance degrades when datasets have a large number of differences
+- Recommended for comparing data within the same database.
+- Uses outer joins to diff rows efficiently.
+- Fully relies on the underlying database engine for computation.
+- Requires both datasets to be queryable with a single SQL query.
+- Time complexity approximates a `JOIN` operation and is largely independent of the number of differences.
+
+### `hashdiff`
+
+- Recommended for comparing datasets across different databases.
+- Also useful for very large tables with few expected differences in the same database.
+- Uses a divide-and-conquer algorithm based on hashing and binary search.
+- Can diff data across distinct database engines, such as PostgreSQL and Snowflake.
+- Time complexity approximates `COUNT(*)` when there are few differences.
+- Performance degrades when datasets have a large number of differences.
 
 </details>
-<br>
 
-For detailed algorithm and performance insights, explore [here](docs/technical-explanation.md), or head to our docs to [learn more about how Datafold diffs data](https://web.archive.org/web/20240804072404/https://docs.datafold.com/data_diff/how-datafold-diffs-data/).
+For more detail, see the [technical explanation](docs/technical-explanation.md). The original hosted explainer is also available in the [Internet Archive](https://web.archive.org/web/20240804072404/https://docs.datafold.com/data_diff/how-datafold-diffs-data/).
 
 ## Contributors
 
-We thank everyone who contributed so far!
+We thank everyone who has contributed so far.
 
-We'd love to see your face here: [Contributing Instructions](CONTRIBUTING.md)
+Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 <a href="https://github.com/GannettDigital/data-diff/graphs/contributors">
   <img src="https://contributors-img.web.app/image?repo=GannettDigital/data-diff" />
 </a>
 
-<br>
-
 ## Analytics
 
-* [Usage Analytics & Data Privacy](docs/usage_analytics.md)
-
-<br>
+- [Usage Analytics & Data Privacy](docs/usage_analytics.md)
 
 ## License
 

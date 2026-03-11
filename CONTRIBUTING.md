@@ -22,7 +22,7 @@ If data-diff returns incorrect results, i.e. false-positive or false-negative, p
 
 Before you report a bug, make sure it doesn't already exist.
 
-See [issues](/datafold/data-diff/issues/).
+See [issues](https://github.com/GannettDigital/data-diff/issues).
 
 ### Suggesting Enhancements
 
@@ -32,9 +32,9 @@ If you'd like us to support a new database, you should open an issue for it, if 
 
 The same goes for other technical requests, like missing features, or gaps in the documentation.
 
-See [issues](/datafold/data-diff/issues/).
+See [issues](https://github.com/GannettDigital/data-diff/issues).
 
-For questions, and non-technical discussions, see [discussions](https://github.com/datafold/data-diff/discussions).
+For questions, and non-technical discussions, see [discussions](https://github.com/GannettDigital/data-diff/discussions).
 
 ### Contributing code
 
@@ -46,7 +46,7 @@ When in doubt, use the existing code as a guideline, or ask.
 
 #### Get started (setup)
 
-To get started, first clone the repository. For example `git clone https://github.com/datafold/data-diff`.
+To get started, first clone the repository. For example `git clone https://github.com/GannettDigital/data-diff`.
 
 Once inside, you can install the dependencies.
 
@@ -82,7 +82,7 @@ New databases should be added as a new module in the `data-diff/databases/` fold
 
 If possible, please also add the database setup to `docker-compose.yml`, so that we can run and test it for ourselves. If you do, also update the CI (`ci.yml`).
 
-Guide to implementing a new database driver: https://data-diff.readthedocs.io/en/latest/new-database-driver-guide.html
+Guide to implementing a new database driver: [docs/new-database-driver-guide.rst](docs/new-database-driver-guide.rst)
 
 ## Development Setup
 
