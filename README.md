@@ -216,7 +216,7 @@ Your database not listed here?
 </details>
 <br>
 
-For detailed algorithm and performance insights, explore [here](docs/technical-explanation.md), or head to our docs to [learn more about how Datafold diffs data](https://docs.datafold.com/data_diff/how-datafold-diffs-data/).
+For detailed algorithm and performance insights, explore our [technical explanation](docs/technical-explanation.md), or head to our docs to [learn more about how Datafold diffs data](https://docs.datafold.com/data_diff/how-datafold-diffs-data/).
 
 ## Contributors
 
