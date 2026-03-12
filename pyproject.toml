@@ -98,6 +98,6 @@ build-backend = "hatchling.build"
 packages = ["data_diff"]
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py38"
 line-length = 120
 exclude = ["archive/", ".venv/", "site-docs/"]
