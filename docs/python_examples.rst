@@ -34,11 +34,11 @@ Python API Examples
 
     snowflake_table = connect_to_table(SNOWFLAKE_CONN_INFO, "table_name")  # Uses id by default
 
-Run `help(connect_to_table)` and `help(diff_tables)` or read our API reference to learn more about the different options:
+Run ``help(connect_to_table)`` and ``help(diff_tables)`` or read the API reference to learn more about the different options:
 
 - connect_to_table_
 
 - diff_tables_
 
-.. _connect_to_table: https://data-diff.readthedocs.io/en/latest/python-api.html#data_diff.connect_to_table
-.. _diff_tables: https://data-diff.readthedocs.io/en/latest/python-api.html#data_diff.diff_tables
+.. _connect_to_table: python-api.html#data_diff.connect_to_table
+.. _diff_tables: python-api.html#data_diff.diff_tables

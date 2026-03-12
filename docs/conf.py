@@ -60,8 +60,8 @@ master_doc = "index"
 
 # General information about the project.
 project = "data-diff"
-copyright = "Datafold"
-author = "Erez Shinan"
+copyright = "Datafold; fork maintained by Gannett | USA TODAY LOCALiQ Data Engineering"
+author = "Datafold, contributors, and Gannett | USA TODAY LOCALiQ Data Engineering"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
