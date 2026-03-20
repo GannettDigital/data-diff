@@ -1,11 +1,14 @@
-[tool.poetry]
+[project]
 name = "data-diff"
 version = "0.11.2"
 description = "Command-line tool and Python library to efficiently diff rows across two different databases."
-authors = ["Datafold <data-diff@datafold.com>", "LOCALiQ Data Team <dms-dba@gannett.com>"]
-license = "MIT"
+authors = [
+    { name = "Datafold", email = "data-diff@datafold.com" },
+    { name = "LOCALiQ Data Team", email = "dms-dba@gannett.com" }
+]
+license = { text = "MIT" }
 readme = "README.md"
-repository = "https://github.com/GannettDigital/data-diff"
+requires-python = ">=3.8.0"
 classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
@@ -19,81 +22,82 @@ classifiers = [
     "Topic :: Database :: Database Engines/Servers",
     "Typing :: Typed"
 ]
-packages = [{ include = "data_diff" }]
-[tool.poetry.dependencies]
-pydantic = "<2.0"
-python = ">=3.8.0,<4.0"
-dsnparse = "<0.2.0"
-click = ">=8.1"
-rich = "*"
-toml = ">=0.10.2"
-mysql-connector-python = {version=">=8.0.29", optional=true}
-psycopg2 = {version="*", optional=true}
-snowflake-connector-python = {version = ">=3.0.2,<4.0.0", optional=true}
-cryptography = {version="*", optional=true}
-trino = {version=">=0.314.0", optional=true}
-presto-python-client = {version="*", optional=true}
-clickhouse-driver = {version="*", optional=true}
-duckdb = {version="*", optional=true}
-dbt-core = {version="^1.0.0"}
-keyring = "*"
-tabulate = ">=0.9.0"
-preql = {version=">=0.2.19", optional=true}
-vertica-python = {version="*", optional=true}
-urllib3 = "<2"
-oracledb = {version = "*", optional=true}
-pyodbc = {version=">=4.0.39", optional=true}
-typing-extensions = ">=4.0.1"
-attrs = ">=23.1.0"
-mashumaro = {version = ">=2.9,<3.11.0", extras = ["msgpack"]}
+dependencies = [
+    "pydantic < 2.0",
+    "dsnparse < 0.2.0",
+    "click >= 8.1",
+    "rich",
+    "toml >= 0.10.2",
+    "dbt-core >= 1.0.0, < 2.0.0",
+    "keyring",
+    "tabulate >= 0.9.0",
+    "urllib3 < 2",
+    "typing-extensions >= 4.0.1",
+    "attrs >= 23.1.0",
+    "mashumaro[msgpack] >= 2.9, < 3.11.0"
+]
 
-[tool.poetry.dev-dependencies]
-parameterized = "*"
-unittest-parallel = "*"
-preql = ">=0.2.19"
-mysql-connector-python = "*"
-psycopg2 = "*"
-snowflake-connector-python = ">=3.0.2,<4.0.0"
-cryptography = "*"
-trino = ">=0.314.0"
-presto-python-client = ">=0.8.3"
-clickhouse-driver = "*"
-vertica-python = "*"
-duckdb = ">=0.9.0"
-dbt-core = ">=1.0.0"
-ruff = ">=0.1.4"
-# google-cloud-bigquery = "*"
-# databricks-sql-connector = "*"
-
-[tool.poetry.extras]
-# When adding, update also: README + dev deps just above
-preql = ["preql"]
-mysql = ["mysql-connector-python"]
+[project.optional-dependencies]
+preql = ["preql >= 0.2.19"]
+mysql = ["mysql-connector-python >= 8.0.29"]
 postgresql = ["psycopg2"]
 redshift = ["psycopg2"]
-snowflake = ["snowflake-connector-python", "cryptography"]
+snowflake = ["snowflake-connector-python >= 3.0.2, < 4.0.0", "cryptography"]
 presto = ["presto-python-client"]
 oracle = ["oracledb"]
-mssql = ["pyodbc"]
-# databricks = ["databricks-sql-connector"]
-trino = ["trino"]
+mssql = ["pyodbc >= 4.0.39"]
+trino = ["trino >= 0.314.0"]
 clickhouse = ["clickhouse-driver"]
 vertica = ["vertica-python"]
 duckdb = ["duckdb"]
 all-dbs = [
-    "preql", "mysql-connector-python", "psycopg2", "snowflake-connector-python", "cryptography", "presto-python-client",
-    "oracledb", "pyodbc", "trino", "clickhouse-driver", "vertica-python", "duckdb"
+    "preql >= 0.2.19",
+    "mysql-connector-python >= 8.0.29",
+    "psycopg2",
+    "snowflake-connector-python >= 3.0.2, < 4.0.0",
+    "cryptography",
+    "presto-python-client",
+    "oracledb",
+    "pyodbc >= 4.0.39",
+    "trino >= 0.314.0",
+    "clickhouse-driver",
+    "vertica-python",
+    "duckdb"
 ]
 
-[tool.poetry.group.dev.dependencies]
-pre-commit = ">=3.5.0"
+[project.scripts]
+data-diff = "data_diff.__main__:main"
+
+[project.urls]
+Repository = "https://github.com/GannettDigital/data-diff"
+
+[dependency-groups]
+dev = [
+    "parameterized",
+    "unittest-parallel",
+    "preql >= 0.2.19",
+    "mysql-connector-python",
+    "psycopg2",
+    "snowflake-connector-python >= 3.0.2, < 4.0.0",
+    "cryptography",
+    "trino >= 0.314.0",
+    "presto-python-client >= 0.8.3",
+    "clickhouse-driver",
+    "vertica-python",
+    "duckdb >= 0.9.0",
+    "dbt-core >= 1.0.0",
+    "ruff >= 0.1.4",
+    "pre-commit >= 3.5.0"
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry.scripts]
-data-diff = 'data_diff.__main__:main'
+[tool.hatch.build.targets.wheel]
+packages = ["data_diff"]
 
-[tool.black]
+[tool.ruff]
+target-version = "py38"
 line-length = 120
+exclude = ["archive/", ".venv/", "site-docs/"]
