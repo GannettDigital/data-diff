@@ -33,11 +33,11 @@ jobs:
       - name: Build the stack
         run: docker-compose up -d mysql postgres presto trino clickhouse
 
-      - name: Install Poetry
-        run: pip install poetry
+      - name: Install uv
+        run: pip install uv
 
       - name: Install package
-        run: poetry install
+        run: uv sync --all-extras
 
       # BigQuery start
     #   - id: 'auth'
@@ -63,4 +63,4 @@ jobs:
             MOTHERDUCK_TOKEN: '${{ secrets.MOTHERDUCK_TOKEN }}'
         run: |
           chmod +x tests/waiting_for_stack_up.sh
-          ./tests/waiting_for_stack_up.sh && poetry run unittest-parallel -j 16
+          ./tests/waiting_for_stack_up.sh && uv run unittest-parallel -j 16
