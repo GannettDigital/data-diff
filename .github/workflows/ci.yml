@@ -36,7 +36,7 @@ jobs:
         run: pip install uv
 
       - name: Install package
-        run: uv sync --all-extras --group ci
+        run: uv sync --locked --all-extras --group ci --verbose
 
       # BigQuery start
     #   - id: 'auth'
