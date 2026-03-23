@@ -1,6 +1,6 @@
 [project]
 name = "data-diff"
-version = "0.11.2"
+version = "0.12.0"
 description = "Command-line tool and Python library to efficiently diff rows across two different databases."
 readme = "README.md"
 requires-python = ">=3.9,<4.0"
