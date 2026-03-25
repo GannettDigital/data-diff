@@ -13,14 +13,14 @@ Look at the other database drivers for example and inspiration.
 
 Most new drivers will require a 3rd party library in order to connect to the database.
 
-These dependencies should be specified in the ``pyproject.toml`` file, in ``[tool.poetry.extras]``. Example:
+These dependencies should be specified in the ``pyproject.toml`` file, in ``[project.optional-dependencies]``. Example:
 
 ::
 
-    [tool.poetry.extras]
+    [project.optional-dependencies]
     postgresql = ["psycopg2"]
 
-Then, users can install the dependencies needed for your database driver, with ``pip install 'data-diff[postgresql]``.
+Then, users can install the dependencies needed for your database driver, with ``pip install 'data-diff[postgresql]'`` or sync a checkout with ``uv sync --extra postgresql``.
 
 This way, data-diff can support a wide variety of drivers, without requiring our users to install libraries that they won't use.
 

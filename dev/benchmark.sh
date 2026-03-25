@@ -2,7 +2,7 @@
 
 run_test() {
     N_SAMPLES=${N_SAMPLES:-1000000} N_THREADS=${N_THREADS:-16} LOG_LEVEL=${LOG_LEVEL:-info} BENCHMARK=1 \
-        poetry run python3 -m unittest tests/test_database_types.py -v -k $1
+        uv run python3 -m unittest tests/test_database_types.py -v -k $1
 }
 
 run_test "postgresql_int_mysql_int"
@@ -16,4 +16,4 @@ run_test "postgresql_int_snowflake_int"
 run_test "postgresql_int_bigquery_int"
 run_test "snowflake_int_snowflake_int"
 
-poetry run python dev/graph.py
+uv run python dev/graph.py

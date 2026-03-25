@@ -51,7 +51,7 @@ To get started, first clone the repository. For example `git clone https://githu
 
 Once inside, you can install the dependencies.
 
-- Option 1: Run `poetry install` to install them in a virtual env. You can then run data-diff using `poetry run data-diff ...` .
+- Option 1: Run `uv sync --all-extras` to install the project and supported adapter dependencies into a local environment. You can then run data-diff using `uv run data-diff ...` .
 
 - Option 2: Run `pip install -e .` to install them, and data-diff, in the global context.
 
@@ -98,13 +98,13 @@ For Mac for performance of Docker, we suggest enabling in the UI:
 **1. Install Data Diff**
 
 When developing/debugging, it's recommended to install dependencies and run it
-directly with `poetry` rather than go through the package.
+directly with `uv` rather than go through a globally installed package.
 
 ```
 $ brew install mysql postgresql # MacOS dependencies for C bindings
 $ apt-get install libpq-dev libmysqlclient-dev # Debian dependencies
-$ pip install poetry # Python dependency isolation tool
-$ poetry install # Install dependencies
+$ pip install uv # Python project and environment tool
+$ uv sync --all-extras # Install dependencies
 ```
 **2. Start Databases**
 
@@ -132,8 +132,8 @@ combinations, so we recommend using `unittest-parallel` that's installed as a
 development dependency.
 
 ```shell-session
-$ poetry run unittest-parallel -j 16 #  run all tests
-$ poetry run python -m unittest -k <test> #  run individual test
+$ uv run unittest-parallel -j 16 # run all tests
+$ uv run python -m unittest -k <test> # run individual test
 ```
 
 **4. Seed the Database(s) (optional)**
@@ -150,25 +150,25 @@ Now you can insert it into the testing database(s):
 
 ```shell-session
 # It's optional to seed more than one to run data-diff(1) against.
-$ poetry run preql -f dev/prepare_db.pql mysql://mysql:Password1@127.0.0.1:3306/mysql
-$ poetry run preql -f dev/prepare_db.pql postgresql://postgres:Password1@127.0.0.1:5432/postgres
+$ uv run preql -f dev/prepare_db.pql mysql://mysql:Password1@127.0.0.1:3306/mysql
+$ uv run preql -f dev/prepare_db.pql postgresql://postgres:Password1@127.0.0.1:5432/postgres
 # Cloud databases
-$ poetry run preql -f dev/prepare_db.pql snowflake://<uri>
-$ poetry run preql -f dev/prepare_db.pql mssql://<uri>
-$ poetry run preql -f dev/prepare_db.pql bigquery:///<project>
+$ uv run preql -f dev/prepare_db.pql snowflake://<uri>
+$ uv run preql -f dev/prepare_db.pql mssql://<uri>
+$ uv run preql -f dev/prepare_db.pql bigquery:///<project>
 ```
 
 **5. Run **data-diff** against seeded database (optional)**
 
 ```bash
-poetry run python3 -m data_diff postgresql://postgres:Password1@localhost/postgres rating postgresql://postgres:Password1@localhost/postgres rating_del1 --verbose
+uv run python3 -m data_diff postgresql://postgres:Password1@localhost/postgres rating postgresql://postgres:Password1@localhost/postgres rating_del1 --verbose
 ```
 
 **6. Run benchmarks (optional)**
 
 ```shell-session
 $ dev/benchmark.sh #  runs benchmarks and puts results in benchmark_<sha>.csv
-$ poetry run python3 dev/graph.py #  create graphs from benchmark_*.csv files
+$ uv run python3 dev/graph.py #  create graphs from benchmark_*.csv files
 ```
 
 You can adjust how many rows we benchmark with by passing `N_SAMPLES` to `dev/benchmark.sh`:
