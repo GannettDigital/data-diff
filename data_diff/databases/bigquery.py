@@ -252,11 +252,14 @@ class BigQuery(Database):
                 target_scopes=["https://www.googleapis.com/auth/cloud-platform"],
             )
 
-        self._client = bigquery.Client(project=project, credentials=credentials, **kw)
+        default_config = bigquery.QueryJobConfig(default_dataset=f"{project}.{dataset}")
+
+        self._client = bigquery.Client(project=project, credentials=credentials, default_query_job_config=default_config, **kw)
         self.project = project
         self.dataset = dataset
 
         self.default_schema = dataset
+
 
     def _normalize_returned_value(self, value):
         if isinstance(value, bytes):
