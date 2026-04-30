@@ -24,7 +24,7 @@ services:
 
     mysql:
       container_name: dd-mysql
-      image: mysql:lts-oracle   # 8.4.x
+      image: mysql:8.4.8-oracle
       # fsync less aggressively for insertion perf for test setup
       command: >
         --mysql-native-password=ON
