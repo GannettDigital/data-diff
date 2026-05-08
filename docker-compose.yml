@@ -53,6 +53,7 @@ services:
       container_name: dd-clickhouse
       image: clickhouse/clickhouse-server:21.12.3.32
       restart: always
+      user: "101:101"
       volumes:
           - clickhouse-data:/var/lib/clickhouse:delegated
       ulimits:

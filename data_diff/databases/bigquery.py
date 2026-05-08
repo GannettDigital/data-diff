@@ -21,6 +21,7 @@ from data_diff.abcs.database_types import (
     UnknownColType,
     Time,
     Date,
+    TimestampTZ, # Added this import
 )
 from data_diff.databases.base import (
     BaseDialect,
@@ -96,10 +97,19 @@ class Dialect(BaseDialect):
         return f"cast({s} as string)"
 
     def type_repr(self, t) -> str:
+        if isinstance(t, Timestamp) or isinstance(t, TimestampTZ): # BigQuery's TIMESTAMP type, does not accept precision
+            return "TIMESTAMP"
+        if isinstance(t, Datetime): # BigQuery's DATETIME type, does not accept precision
+            return "DATETIME"
+        if isinstance(t, Date):
+            return "DATE"
+        if isinstance(t, Time):
+            return "TIME"
         try:
             return {str: "STRING", float: "FLOAT64"}[t]
         except KeyError:
             return super().type_repr(t)
+
 
     def parse_type(self, table_path: DbPath, info: RawColumnInfo) -> ColType:
         col_type = super().parse_type(table_path, info)
@@ -151,7 +161,7 @@ class Dialect(BaseDialect):
             return super().to_comparable(value, coltype)
 
     def set_timezone_to_utc(self) -> str:
-        raise NotImplementedError()
+        return ""
 
     def parse_table_name(self, name: str) -> DbPath:
         path = parse_table_name(name)

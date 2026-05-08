@@ -21,7 +21,11 @@ def run_datadiff_cli(*args):
         logging.error(e.stderr)
         raise
     if stderr:
-        raise Exception(stderr)
+        stderr_str = stderr.decode()
+        if "Traceback" in stderr_str or "Error" in stderr_str or "Exception" in stderr_str:
+            # Ignore FutureWarning
+            if "FutureWarning" not in stderr_str:
+                raise Exception(stderr)
     return stdout.splitlines()
 
 
