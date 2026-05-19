@@ -959,7 +959,12 @@ class Database(abc.ABC):
         It's a cleaner approach than exposing cursors, but may not be enough in all cases.
         """
 
+        sql_code: Union[str, ThreadLocalInterpreter]
+
         compiler = Compiler(self)
+
+        if self.is_closed:
+            raise ConnectError("This database connection is closed.")
         if isinstance(sql_ast, Generator):
             sql_code = ThreadLocalInterpreter(compiler, sql_ast)
         elif isinstance(sql_ast, list):
@@ -973,8 +978,9 @@ class Database(abc.ABC):
                 if res_type is None:
                     res_type = sql_ast.type
                 sql_code = self.compile(sql_ast)
-                if sql_code is SKIP:
-                    return SKIP
+
+            if sql_code is SKIP or sql_code == "":
+                return QueryResult([]) # Return empty QueryResult if no-op
 
             if log_message:
                 logger.debug("Running SQL (%s): %s \n%s", self.name, log_message, sql_code)
@@ -987,13 +993,14 @@ class Database(abc.ABC):
             for row in explain:
                 # Most returned a 1-tuple. Presto returns a string
                 if isinstance(row, tuple):
-                    (row,) = row
+                    (row) = row
                 logger.debug("EXPLAIN: %s", row)
             answer = input("Continue? [y/n] ")
             if answer.lower() not in ["y", "yes"]:
                 sys.exit(1)
 
         res = self._query(sql_code)
+
         if res_type is list:
             return list(res)
         elif res_type is int:
