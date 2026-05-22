@@ -513,6 +513,13 @@ def diff_int_dynamic_color_template(diff_value: int) -> str:
 
 
 def _jsons_equiv(a: str, b: str):
+    # Treat Python None (DB null) as the JSON null literal so that a NULL on
+    # the MySQL side matches a 'null' string produced by TO_JSON_STRING(NULL)
+    # on the BigQuery side (or any other DB that serializes NULL as 'null').
+    if a is None:
+        a = "null"
+    if b is None:
+        b = "null"
     try:
         return json.loads(a) == json.loads(b)
     except (ValueError, TypeError, json.decoder.JSONDecodeError):  # not valid jsons
