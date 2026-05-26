@@ -109,15 +109,6 @@ class Dialect(BaseDialect):
         return f"md5({s})"
 
     def normalize_timestamp(self, value: str, coltype: TemporalType) -> str:
-        # MySQL zero-date equivalences vs BigQuery:
-        #   TIMESTAMP '0000-00-00 00:00:00'  -> '1970-01-01 00:00:00.000000' (Unix epoch)
-        #   DATETIME  '0000-00-00 00:00:00'  -> NULL
-        if isinstance(coltype, Timestamp):
-            epoch = "cast('1970-01-01 00:00:00' as datetime(6))"
-            value = f"IF({value} = '0000-00-00 00:00:00', {epoch}, {value})"
-        elif isinstance(coltype, Datetime):
-            value = f"NULLIF({value}, '0000-00-00 00:00:00')"
-
         if coltype.rounds:
             return self.to_string(f"cast( cast({value} as datetime({coltype.precision})) as datetime(6))")
 

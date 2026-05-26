@@ -40,7 +40,7 @@ dependencies = [
 
 [project.optional-dependencies]
 preql = ["preql>=0.2.19"]
-mysql = ["mysql-connector-python==8.0.29"]
+mysql = ["mysql-connector-python>=8.0.29"]
 postgresql = ["psycopg2"]
 redshift = ["psycopg2"]
 snowflake = ["snowflake-connector-python>=3.0.2,<4.0.0", "cryptography"]
@@ -54,7 +54,7 @@ duckdb = ["duckdb"]
 bigquery = ["google-cloud-bigquery"]
 all-dbs = [
   "preql>=0.2.19",
-  "mysql-connector-python==8.0.29",
+  "mysql-connector-python>=8.0.29",
   "psycopg2",
   "snowflake-connector-python>=3.0.2,<4.0.0",
   "cryptography",
