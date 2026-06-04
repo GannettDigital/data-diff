@@ -11,6 +11,7 @@ from data_diff.utils import (
     columns_removed_template,
     columns_added_template,
     columns_type_changed_template,
+    _jsons_equiv,
 )
 
 from data_diff.__main__ import _remove_passwords_in_dict
@@ -211,3 +212,43 @@ class TestColumnsTemplateMethods(unittest.TestCase):
         output = columns_type_changed_template({"column1", "column2"})
         self.assertIn("Type changed [2]: [green]", output)
         self.assertEqual(self.extract_columns_set(output), {"column1", "column2"})
+
+
+class TestJsonsEquiv(unittest.TestCase):
+    # --- None / null equivalence ---
+    def test_both_none(self):
+        """Two DB NULLs are equivalent."""
+        self.assertTrue(_jsons_equiv(None, None))
+
+    def test_none_vs_json_null_string(self):
+        """DB NULL on one side, JSON 'null' string on the other, are equivalent."""
+        self.assertTrue(_jsons_equiv(None, "null"))
+        self.assertTrue(_jsons_equiv("null", None))
+
+    def test_none_vs_json_string_null(self):
+        """DB NULL must NOT equal the JSON string literal \"null\"."""
+        self.assertFalse(_jsons_equiv(None, '"null"'))
+        self.assertFalse(_jsons_equiv('"null"', None))
+
+    # --- Identical strings fast-path ---
+    def test_identical_strings(self):
+        self.assertTrue(_jsons_equiv('{"a": 1}', '{"a": 1}'))
+
+    # --- Semantic JSON equivalence ---
+    def test_equivalent_objects_different_whitespace(self):
+        self.assertTrue(_jsons_equiv('{"a":1,"b":2}', '{"b": 2, "a": 1}'))
+
+    def test_equivalent_arrays(self):
+        self.assertTrue(_jsons_equiv("[1, 2, 3]", "[1,2,3]"))
+
+    def test_different_values(self):
+        self.assertFalse(_jsons_equiv('{"a": 1}', '{"a": 2}'))
+
+    def test_different_types(self):
+        self.assertFalse(_jsons_equiv("1", '"1"'))
+
+    # --- Invalid JSON ---
+    def test_invalid_json_returns_false(self):
+        # Different invalid-JSON strings → False (can't parse either side)
+        self.assertFalse(_jsons_equiv("not-json", "also-not-json"))
+        self.assertFalse(_jsons_equiv('{"a": 1}', "not-json"))

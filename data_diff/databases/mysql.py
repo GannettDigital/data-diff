@@ -8,6 +8,7 @@ from data_diff.abcs.database_types import (
     Float,
     Decimal,
     Integer,
+    JSON,
     Text,
     TemporalType,
     FractionalType,
@@ -68,6 +69,8 @@ class Dialect(BaseDialect):
         "tinytext": Text,
         # Boolean
         "boolean": Boolean,
+        # JSON
+        "json": JSON,
     }
 
     def quote(self, s: str) -> str:
