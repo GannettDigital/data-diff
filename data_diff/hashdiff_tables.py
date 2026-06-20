@@ -213,6 +213,9 @@ class HashDiffer(TableDiffer):
             return
 
         info_tree.info.is_diff = True
+        logger.info(
+            ". " * level + f"Diffing segment results: count1/count2 {count1}/{count2} checksum1/checksum2 {checksum1}/{checksum2}"
+        )
         return self._bisect_and_diff_segments(ti, table1, table2, info_tree, level=level, max_rows=max(count1, count2))
 
     def _bisect_and_diff_segments(
